@@ -11,8 +11,6 @@ var cluster = require('cluster');
 var os = require('os');
 var fs = require('fs');
 
-var bonjour = require('bonjour')();
-
 var networkInterfaces = require('os').networkInterfaces();
 
 var IP = [];
@@ -28,7 +26,7 @@ function ERROR(message) {
 
 }
 
-var CONFIG = __dirname + '/../config/';
+//var CONFIG = __dirname + '/../config/';
 
 require('./worker.lib/utils/fs')();
 require('./worker.lib/utils/crypto')();
@@ -39,22 +37,17 @@ var startMaster = require("./worker.lib/Master");
 var startThreads = require('./worker.lib/Threads');
 
 if (cluster.isMaster) {
-    console.log('\nDiscovering hypervisor...');
-    bonjour.find({
-        type: 'hypervisor',
-        subtypes: [
-            NET.getIPAddress()
-        ]
-    }, function (service) {
 
-        var Config = {};
-        Config = service.txt;
 
-        console.log('[OK] Found ' + service.txt.host);
-        startMaster(NET, cluster, Config);
+    var Config = {
+        host: process.env.host
+    };
 
-    });
+    console.log('\nContacting ' + Config.host);
+    startMaster(NET, cluster, Config);
+
 } else {
+
     process.on('message', function (data) {
         if (data.msgFromMaster) {
             var Config = JSON.parse(data.msgFromMaster);
@@ -69,4 +62,5 @@ if (cluster.isMaster) {
             });
         }
     })
+
 };

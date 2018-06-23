@@ -1,7 +1,14 @@
 module.exports = function (NET, cluster, Config) {
 
+    Math = require(__dirname + '/../lib/framework/math')();
+    Date = require(__dirname + '/../lib/framework/dates')();
+    Object = require(__dirname + '/../lib/framework/objects')();
+    Array = require(__dirname + '/../lib/framework/arrays')();
+    require(__dirname + '/../lib/framework/utils');
+
     var date = new Date();
-    console.log("   * thread started @ " + date + " #" + process.pid);
+
+    console.log("   * thread started @ " + date.toMySQL() + " #" + process.pid);
 
     var ioclient = require('socket.io-client');
     var port = process.env.port;
@@ -10,12 +17,6 @@ module.exports = function (NET, cluster, Config) {
     var express = require('express');
     var app = express();
     var server = app.listen(0, NET.getIPAddress());
-
-    Math = require(__dirname + '/../lib/framework/math')();
-    Date = require(__dirname + '/../lib/framework/dates')();
-    Object = require(__dirname + '/../lib/framework/objects')();
-    Array = require(__dirname + '/../lib/framework/arrays')();
-    require(__dirname + '/../lib/framework/utils');
 
     function init_thread() {
 
@@ -158,6 +159,7 @@ module.exports = function (NET, cluster, Config) {
         app.use(require('compression')());
 
         // API
+
         require('../lib/server/api')(app, express, Config);
 
         app.get('/z/(*)', function (req, res) {
@@ -171,23 +173,26 @@ module.exports = function (NET, cluster, Config) {
         });
     };
 
-    // register worker with hypervisor
-    var socket = ioclient('http://' + Config.hypervisor, {
-        query: "engine=worker&iokey=" + setToken() + '&task=' + process.env.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
+    // register worker with manager
+    var socket = ioclient(Config.host, {
+        query: "engine=app&iokey=" + setToken() + '&task=' + process.env.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
         reconnection: true,
         reconnectionDelay: 1000
     });
 
     socket.on('disconnect', function (x) {
-        console.log("   ! hypervisor lost...");
+        console.log("   ! manager lost...");
     });
 
     socket.on('connect', function () {
-        console.log('   * online');
+        console.log('   * waiting for manager to send settings...');
     });
 
-    socket.on('OASERVICE#CONFIG', function (r) {
+    socket.on('#CONFIG', function (r) {
         global.settings = r;
+        console.log('   * launching instance');
+        Config.session = r.session;
+        global.settings = r.config;
         init_thread();
     });
 

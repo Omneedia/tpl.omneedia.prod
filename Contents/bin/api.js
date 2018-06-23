@@ -3,6 +3,7 @@ module.exports = function (app) {
     var path = require('path');
     var sep = "/";
 
+
     function processRoute(req, resp, next) {
 
         var fs = require('fs');
@@ -237,104 +238,7 @@ module.exports = function (app) {
         if (containsSql) return res.status(403).end('SQL_INJECTION');
         next();
     };
-
+    console.log('xxxxx');
     app.post('/api', sqlinjection, processRoute);
 
-    if (!process.env.task) {
-        app.get('/api', function (req, res) {
-            var fs = require('fs');
-            var response = {
-                omneedia: {
-                    engine: global.$_VERSION
-                },
-                namespace: global.manifest.namespace,
-                classes: []
-            };
-
-            fs.readdir(global.PROJECT_WEB + sep + "Contents" + sep + "Services", function (e, classes) {
-                if (e) return res.status(404).send('Not found');
-                var myclass = [];
-                for (var i = 0; i < classes.length; i++) {
-                    if ((classes[i] != "node_modules") && (classes[i] != "sql") && (classes[i].substr(0, 1) != ".")) myclass.push(classes[i].split('.js')[0]);
-                };
-                response.classes = myclass;
-                res.header("Content-Type", "application/json; charset=utf-8");
-                res.end(JSON.stringify(response, null, 4));
-            })
-        });
-
-        app.get('/api/:ns', function (req, res) {
-            var url = req.url.split('?');
-            if (url.length > 1) {
-                if (url[1].indexOf("javascript") > -1) {
-                    var REMOTE_API = {};
-                    REMOTE_API.url = "http://" + req.headers.host + "/api";
-                    REMOTE_API.type = "remoting";
-                    REMOTE_API.namespace = "App";
-                    REMOTE_API.descriptor = "App.REMOTING_API";
-                    REMOTE_API.actions = {};
-                    REMOTE_API.actions[req.params.ns] = [];
-
-                    if (req.params.ns.indexOf("__QUERY__") == -1) {
-                        // MicroAPI
-                        fs.stat(PROJECT_WEB + sep + "Contents" + sep + "Services" + sep + req.params.ns + ".js", function (e, s) {
-                            if (e) return res.status(404).send('Not found');
-                            try {
-                                var _api = require(PROJECT_WEB + sep + "Contents" + sep + "Services" + sep + req.params.ns + ".js");
-                            } catch (e) {
-                                return res.status(404).send('Not found');
-                            };
-                            for (var e in _api) {
-                                if (_api[e]) {
-                                    if (_api[e].toString().substr(0, 8) == "function") {
-                                        var obj = {};
-                                        obj.name = e;
-                                        var myfn = _api[e].toString().split('function')[1].split('{')[0].trim().split('(')[1].split(')')[0].split(',');
-                                        obj.len = myfn.length - 1;
-                                        REMOTE_API.actions[req.params.ns][REMOTE_API.actions[req.params.ns].length] = obj;
-                                    }
-                                }
-                            };
-                            REMOTE_API.headers = {
-                                z: "%FINGERPRINT%"
-                            };
-                            var str = "if (Ext.syncRequire) Ext.syncRequire('Ext.direct.Manager');Ext.namespace('App');";
-                            str += "App.REMOTING_API=" + JSON.stringify(REMOTE_API, null).replace(/"%FINGERPRINT%"/g, "window.z") + ";";
-                            str += "Ext.Direct.addProvider(App.REMOTING_API);";
-                            res.header("Content-Type", "application/json; charset=utf-8");
-                            res.end(str);
-                        });
-                    } else {
-                        // QRL (Query Resource Locator)
-
-                        fs.stat(__dirname + sep + '..' + sep + '..' + sep + "node_modules" + sep + '@omneedia' + sep + "db" + sep + "__QUERY__.js", function (e, s) {
-                            if (e) return res.status(404).send('Not found');
-
-                            var _api = require(__dirname + sep + '..' + sep + '..' + sep + "node_modules" + sep + '@omneedia' + sep + "db" + sep + "__QUERY__.js");
-                            for (var e in _api) {
-                                if (_api[e]) {
-                                    if (_api[e].toString().substr(0, 8) == "function") {
-                                        var obj = {};
-                                        obj.name = e;
-                                        var myfn = _api[e].toString().split('function')[1].split('{')[0].trim().split('(')[1].split(')')[0].split(',');
-                                        obj.len = myfn.length - 1;
-                                        REMOTE_API.actions[req.params.ns][REMOTE_API.actions[req.params.ns].length] = obj;
-                                    }
-                                }
-                            };
-                            REMOTE_API.headers = {
-                                z: "%FINGERPRINT%"
-                            };
-                            var str = "if (Ext.syncRequire) Ext.syncRequire('Ext.direct.Manager');Ext.namespace('App');";
-                            str += "App.REMOTING_API=" + JSON.stringify(REMOTE_API, null).replace(/"%FINGERPRINT%"/g, "window.z") + ";";
-                            str += "Ext.Direct.addProvider(App.REMOTING_API);";
-                            res.header("Content-Type", "application/json; charset=utf-8");
-                            res.end(str);
-
-                        });
-                    };
-                } else return res.status(404).send('Not found');
-            } else return res.status(404).send('Not found');
-        });
-    };
 }

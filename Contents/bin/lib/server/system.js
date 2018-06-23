@@ -48,7 +48,6 @@ module.exports = function (app, express, Config) {
                         var tb = set.split('://')[1];
                         _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
                             if (r.length == 0) return cb.status(404).end('NOT_FOUND');
-                            console.log(r[0]);
                             cb.set('Content-disposition', 'inline; filename="' + r[0].filename + '"');
                             cb.set("Content-Type", r[0].type);
                             cb.set("Content-Length", r[0].size);

@@ -102,8 +102,49 @@ module.exports = function (socket) {
     });
     };
     */
+    // CLI
 
-    //return io(socket);
+    if (socket.handshake.query.payload) {
+
+        var ip = socket.handshake.headers["x-real-ip"];
+        if (!ip) ip = socket.handshake.headers["x-forwarded-for"];
+        console.log('+ Client ' + socket.id + ' connected from ' + ip);
+
+        function getPayload(payload, cb) {
+            var code = new Buffer(payload, 'base64').toString('ascii');
+            var secret = code.substr(0, 9);
+            var pid_id = code.substr(9, 9);
+            mysql_query('select pid_id pid, users.userid from pids join users on users.login=pids.login where secret="' + secret + '"', function (e, r) {
+                if (r.length > 0) cb(r[0]);
+                else cb(false);
+            })
+        };
+
+        getPayload(socket.handshake.query.payload, function (a) {
+            if (a) {
+                var date = new Date();
+                mysql_query('INSERT INTO users_online (user,dt,sid,origin) VALUES ("' + a.userid + '","' + date.toMySQL() + '","' + socket.id + '","CLI")', function (e, r) {
+                    mysql_query('select userid,lastname,firstname,mail,country,users_status.`status`,`users_status`.info from users join users_status on users_status.`user`=users.`userid` where users.`userid` in (select `user` from users_online)', function (e, r) {
+                        IO.emit('#USERS#JOIN', r);
+                        socket.join('#CLI');
+                    });
+                });
+            } else {
+                console.log('* Unauthorized - ' + socket.id + ' from ' + ip);
+                socket.disconnect('* Unauthorized');
+            }
+        });
+        socket.on('disconnect', function (s) {
+
+            console.log('* Leaving ' + socket.id + ' - ' + s);
+            mysql_query('DELETE FROM users_online WHERE sid="' + socket.id + '"', function (e, r) {
+
+            });
+
+        });
+        return;
+    };
+    return io(socket);
     if (socket.handshake.query.iokey) {
         if (Token(Buffer.from(socket.handshake.query.iokey, 'base64').toString())) io(socket)
         else {

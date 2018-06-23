@@ -138,13 +138,20 @@ module.exports = function (app) {
                 res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
                 return;
             };
-            try {
+            if (typeof response == "object") {
                 JSON.parse(JSON.stringify(response));
                 req.session.user = response;
                 global.OASocketonAuth(JSON.stringify(response));
-            } catch (e) {
-                global.OASocketonFailedAuth(response);
+            } else {
+                try {
+                    JSON.parse(JSON.stringify(response));
+                    req.session.user = response;
+                    global.OASocketonAuth(JSON.stringify(response));
+                } catch (e) {
+                    global.OASocketonFailedAuth(response);
+                }
             }
+
             // Close the login window
             res.set('Content-Type', 'text/html');
             res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
