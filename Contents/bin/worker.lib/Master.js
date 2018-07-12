@@ -3,16 +3,10 @@ module.exports = function (NET, cluster, Config) {
     var port = process.env.port;
     if (!port) port = 3000;
 
-    var fs = require('fs');
     var numCPUs = require('os').cpus().length;
     var net = require('net');
 
-    if (process.env.threads) {
-        if (process.env.threads != "*") {
-            numCPUs = process.env.threads * 1;
-            if (numCPUs > require('os').cpus().length) numCPUs = require('os').cpus().length;
-        };
-    }
+    var numCPUs = 1;
 
     function init() {
 
@@ -22,7 +16,7 @@ module.exports = function (NET, cluster, Config) {
 
         process.on('exit', function () {
             console.log(' ');
-            console.log('   - Worker stopped.');
+            console.log('\t- Worker stopped.');
             console.log(' ');
         });
 
@@ -49,7 +43,7 @@ module.exports = function (NET, cluster, Config) {
                 msgFromMaster: JSON.stringify(Config)
             });
             workers[i].on('exit', function (worker, code, signal) {
-                console.log('   ! RESPAWING WORKER#', i);
+                console.log('\t! RESPAWING WORKER#', i);
                 spawn(i);
             });
         };
@@ -66,7 +60,7 @@ module.exports = function (NET, cluster, Config) {
             worker.send('sticky-session:connection', connection);
         }).listen(port);
 
-        console.log('   - Worker online.');
+        console.log('\t- Worker starting...');
 
     };
 

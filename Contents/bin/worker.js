@@ -5,11 +5,12 @@
  *
  **/
 
-// task=xxx port=3000 node worker.js
+// task=manager/task port=3000 node worker.js
 
 var cluster = require('cluster');
 var os = require('os');
 var fs = require('fs');
+var shelljs = require('shelljs');
 
 var networkInterfaces = require('os').networkInterfaces();
 
@@ -36,14 +37,41 @@ var NET = require('./worker.lib/utils/net');
 var startMaster = require("./worker.lib/Master");
 var startThreads = require('./worker.lib/Threads');
 
+if (!process.env.task) return console.log('ERR: Please provide a task!');
+var task = process.env.task;
+if (task.indexOf('://') == -1) task = 'https://' + task;
+
+var lt = task.lastIndexOf('/');
+var host = task.substr(0, lt);
+task = task.substr(lt + 1, task.length);
+
+var Request = require('request');
+var obj = {};
+if (process.env['proxy']) {
+    obj = {
+        'proxy': process.env['proxy']
+    };
+    shelljs.exec('git config --global http.proxy ' + process.env['proxy']);
+    shelljs.exec('git config --global https.proxy ' + process.env['proxy']);
+} else {
+    shelljs.exec('git config --global --unset http.proxy', {
+        silent: true
+    });
+    shelljs.exec('git config --global --unset https.proxy', {
+        silent: true
+    });
+};
+
+global.request = Request.defaults(obj);
+
 if (cluster.isMaster) {
 
 
     var Config = {
-        host: process.env.host
+        host: host,
+        task: task
     };
 
-    console.log('\nContacting ' + Config.host);
     startMaster(NET, cluster, Config);
 
 } else {

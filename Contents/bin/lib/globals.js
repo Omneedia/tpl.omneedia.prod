@@ -1,6 +1,5 @@
 module.exports = function () {
 
-    var path = require('path');
     var sep = "/";
 
     global.ROOT = __dirname + sep + '..' + sep + '..' + sep + 'bin';

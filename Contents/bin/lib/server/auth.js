@@ -2,10 +2,7 @@ module.exports = function (app) {
 
     var authom = require("@omneedia/authom");
     var fs = require('fs');
-    var path = require('path');
     var sep = "/";
-
-    var util = require('../util');
 
     global.Auth = {
         officer: function (req, profile, fn) {
@@ -129,8 +126,10 @@ module.exports = function (app) {
 
     authom.on("auth", function (req, res, data) {
         profile = data;
-        //console.log(profile);
         Auth.officer(req, profile, function (err, response) {
+            console.log(err);
+            console.log(response);
+            console.log('*******');
             if (!response) {
                 global.OASocketonFailedAuth(response);
                 // Close the login window
@@ -139,7 +138,7 @@ module.exports = function (app) {
                 return;
             };
             if (typeof response == "object") {
-                JSON.parse(JSON.stringify(response));
+                //response=JSON.parse(JSON.stringify(response));
                 req.session.user = response;
                 global.OASocketonAuth(JSON.stringify(response));
             } else {

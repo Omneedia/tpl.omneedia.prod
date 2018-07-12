@@ -3,23 +3,19 @@ module.exports = function (socket) {
     var fs = require('fs');
     var shelljs = require('shelljs');
 
-    function io(socket) {
-        //console.log(socket);
-        // AUTH
-        global.OASocketonAuth = function (response) {
-            var r = JSON.parse(response);
-            console.log('--------------------------------------');
-            /*
-            if (!Clients.uid[r.uid]) Clients.uid[r.uid] = [];
-            if (!Clients.mail[r.mail]) Clients.mail[r.mail] = [];
-            if (Clients.uid[r.uid].indexOf(socket.id) == -1) Clients.uid[r.uid].push(socket.id);
-            if (Clients.mail[r.mail].indexOf(socket.id) == -1) Clients.mail[r.mail].push(socket.id);*/
-            socket.emit("#auth", response);
-        };
-        global.OASocketonFailedAuth = function (response) {
-            socket.emit("#failedauth", response);
-        };
+    global.OASocketonAuth = function (response) {
+        var r = JSON.parse(response);
+        /*
+        if (!Clients.uid[r.uid]) Clients.uid[r.uid] = [];
+        if (!Clients.mail[r.mail]) Clients.mail[r.mail] = [];
+        if (Clients.uid[r.uid].indexOf(socket.id) == -1) Clients.uid[r.uid].push(socket.id);
+        if (Clients.mail[r.mail].indexOf(socket.id) == -1) Clients.mail[r.mail].push(socket.id);*/
+        socket.emit("#auth", response);
     };
+    global.OASocketonFailedAuth = function (response) {
+        socket.emit("#failedauth", response);
+    };
+
     /*
         function io(socket) {
             if (socket.handshake.query.engine) {
@@ -103,7 +99,7 @@ module.exports = function (socket) {
     };
     */
     // CLI
-
+    /*
     if (socket.handshake.query.payload) {
 
         var ip = socket.handshake.headers["x-real-ip"];
@@ -144,16 +140,17 @@ module.exports = function (socket) {
         });
         return;
     };
-    return io(socket);
-    if (socket.handshake.query.iokey) {
-        if (Token(Buffer.from(socket.handshake.query.iokey, 'base64').toString())) io(socket)
-        else {
-            console.log('* Unauthorized - ' + socket.id + ' from ' + socket.handshake.headers["x-real-ip"]);
-            socket.disconnect('* Unauthorized');
-        }
-        return;
-    };
+    */
 
-    console.log('* Unauthorized - ' + socket.id + ' from ' + socket.handshake.headers["x-real-ip"]);
-    socket.disconnect('* Unauthorized');
+    /* if (socket.handshake.query.iokey) {
+         if (Token(Buffer.from(socket.handshake.query.iokey, 'base64').toString())) io(socket)
+         else {
+             console.log('* Unauthorized - ' + socket.id + ' from ' + socket.handshake.headers["x-real-ip"]);
+             socket.disconnect('* Unauthorized');
+         }
+         return;
+     };
+
+     console.log('* Unauthorized - ' + socket.id + ' from ' + socket.handshake.headers["x-real-ip"]);
+     socket.disconnect('* Unauthorized');*/
 }

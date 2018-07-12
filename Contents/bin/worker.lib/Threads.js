@@ -8,7 +8,7 @@ module.exports = function (NET, cluster, Config) {
 
     var date = new Date();
 
-    console.log("   * thread started @ " + date.toMySQL() + " #" + process.pid);
+    console.log("\t* thread started @ " + date.toMySQL() + " #" + process.pid);
 
     var ioclient = require('socket.io-client');
     var port = process.env.port;
@@ -171,29 +171,44 @@ module.exports = function (NET, cluster, Config) {
                 res.end('<script>top.window.z="' + req.session.fingerprint + '";top.window.BOOTSTRAP_ME();</script>');
             });
         });
+
+        console.log('\n\t* Launched.\n');
+
     };
 
     // register worker with manager
-    var socket = ioclient(Config.host, {
-        query: "engine=app&iokey=" + setToken() + '&task=' + process.env.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
-        reconnection: true,
-        reconnectionDelay: 1000
-    });
+    console.log('\n\t- Contacting manager')
+    global.request(Config.host + '/io.uri', function (e, r, io_host) {
 
-    socket.on('disconnect', function (x) {
-        console.log("   ! manager lost...");
-    });
+        global.request(Config.host + '/session.uri', function (e, r, Config_session) {
+            /*io_host = process.env.io;
+            Config_session = process.env.session;*/
 
-    socket.on('connect', function () {
-        console.log('   * waiting for manager to send settings...');
-    });
+            if (!process.env.proxy) io_host = Config.host;
 
-    socket.on('#CONFIG', function (r) {
-        global.settings = r;
-        console.log('   * launching instance');
-        Config.session = r.session;
-        global.settings = r.config;
-        init_thread();
+            global.socket = ioclient(io_host, {
+                query: "engine=app&iokey=" + setToken() + '&task=' + Config.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
+                reconnection: true,
+                reconnectionDelay: 1000
+            });
+
+            global.socket.on('disconnect', function (x) {
+                console.log("\t! manager lost...");
+            });
+
+            global.socket.on('connect', function () {
+                console.log('\t* waiting for manager to send settings...');
+            });
+
+            global.socket.on('#CONFIG', function (r) {
+                global.settings = r;
+                console.log('\t* launching instance');
+                Config.session = r.session;
+                global.settings = r.config;
+                if (process.env.proxy) Config.session = Config_session;
+                init_thread();
+            });
+        });
     });
 
     process.on('message', function (message, connection) {
