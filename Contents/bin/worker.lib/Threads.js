@@ -7,6 +7,7 @@ module.exports = function (NET, cluster, Config) {
     require(__dirname + '/../lib/framework/utils');
 
     var date = new Date();
+    global.Config = Config;
 
     console.log("\t* thread started @ " + date.toMySQL() + " #" + process.pid);
 

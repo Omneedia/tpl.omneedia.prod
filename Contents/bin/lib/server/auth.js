@@ -30,6 +30,7 @@ module.exports = function (app) {
             Officer.getProfile = function (user, cb) {
                 var response = [];
                 if (cb) {
+
                     fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
                         var profiler = JSON.parse(r.toString('utf-8'));
                         for (var el in profiler.profile) {
@@ -68,10 +69,6 @@ module.exports = function (app) {
         };
         //console.log(profile);
         Auth.officer(req, profile, function (err, response) {
-            /*console.log('-----------');
-            console.log(err);
-            console.log(response);
-            console.log('-----------');*/
             if (!response) {
                 global.OASocketonFailedAuth(response);
                 // Close the login window
@@ -87,9 +84,24 @@ module.exports = function (app) {
                 console.log(e);
                 global.OASocketonFailedAuth(response);
             }
-            // Close the login window
-            res.set('Content-Type', 'text/html');
-            res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
+            global.request({
+                uri: global.Config.host + '/profile',
+                method: "POST",
+                form: {
+                    task: global.Config.task,
+                    user: req.session.user.mail.toLowerCase()
+                }
+            }, function (e, r, bx) {
+                var profiler = JSON.parse(bx);
+                var rp = [];
+                for (var i = 0; i < profiler.length; i++) {
+                    rp.push(profiler[i].name);
+                };
+                req.user.profiles = rp;
+                // Close the login window
+                res.set('Content-Type', 'text/html');
+                res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
+            });
         });
     };
 
@@ -133,14 +145,17 @@ module.exports = function (app) {
         if (!req.session.user) return res.status(400).end('{"err":"NOT_AUTHENTICATED"}');
         req.user = req.session.user;
         var response = [];
-        require('fs').readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-            if (e) return res.end(JSON.stringify({
-                err: "NO_PROFILE"
-            }));
-            var profiler = JSON.parse(r.toString('utf-8'));
-            for (var el in profiler.profile) {
-                var p = profiler.profile[el];
-                if (p.indexOf(req.user.mail.split('@')[0]) > -1) response.push(el);
+        global.request({
+            uri: global.Config.host + '/profile',
+            method: "POST",
+            form: {
+                task: global.Config.task,
+                user: req.user.mail.toLowerCase()
+            }
+        }, function (e, r, bx) {
+            var profiler = JSON.parse(bx);
+            for (var i = 0; i < profiler.length; i++) {
+                response.push(profiler[i].name);
             };
             req.user.profiles = response;
             res.end(JSON.stringify(req.user));
