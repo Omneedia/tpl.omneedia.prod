@@ -111,6 +111,7 @@ module.exports = function (app, express, Config) {
     _App.using = function (unit) {
         //built in classes
         if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
+        if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
         try {
             return require(global.ROOT + sep + 'node_modules' + sep + unit);
         } catch (e) {

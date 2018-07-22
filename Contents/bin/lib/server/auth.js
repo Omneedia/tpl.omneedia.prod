@@ -22,6 +22,7 @@ module.exports = function (app) {
             Officer.using = function (unit) {
                 //built in classes
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
+                if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
                 try {
                     return require(global.ROOT + sep + 'node_modules' + sep + unit);
                 } catch (e) {
@@ -78,8 +79,12 @@ module.exports = function (app) {
         console.log(req.session);
         var authType = req.session.authType;
         req.session.destroy();
-        if (global.settings.auth[authType.toLowerCase()]) var url = global.settings.auth[authType.toLowerCase()].logout;
-        else var url = "/bye";
+        try {
+            if (global.settings.auth[authType.toLowerCase()]) var url = global.settings.auth[authType.toLowerCase()].logout;
+            else var url = "/bye";
+        } catch (e) {
+            var url = "/bye";
+        };
         return res.redirect(url);
     });
 
