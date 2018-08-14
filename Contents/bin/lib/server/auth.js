@@ -139,7 +139,9 @@ module.exports = function (app) {
             if (!response) {
                 global.OASocketonFailedAuth(response);
                 // Close the login window
-                res.set('Content-Type', 'text/html');
+                try {
+                    res.set('Content-Type', 'text/html');
+                } catch (e) {};
                 res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
                 return;
             };
@@ -151,7 +153,9 @@ module.exports = function (app) {
                 global.OASocketonFailedAuth(response);
             }
             // Close the login window
-            res.set('Content-Type', 'text/html');
+            try {
+                res.set('Content-Type', 'text/html');
+            } catch (e) {};
             res.end("<html><body><script>setTimeout(window.close, 100);</script></body></html>");
         });
     });
