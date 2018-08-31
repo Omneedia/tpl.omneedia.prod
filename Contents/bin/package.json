@@ -5,7 +5,7 @@
   "main": "worker.js",
   "dependencies": {
     "@omneedia/api": "^1.0.0",
-    "@omneedia/db": "1.2.0",
+    "@omneedia/db": "1.2.1",
     "@omneedia/gridfs-storage-engine": "^0.2.3",
     "@omneedia/parse-function": "^5.0.23",
     "@omneedia/socket.io-adapter-mongo": "^2.0.0",
