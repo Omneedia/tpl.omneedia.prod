@@ -153,17 +153,7 @@ module.exports = function (app, express, Config) {
             };
 
             // Sockets API
-            x.IO = {
-                send: function (uri, data, users) {
-                    /*var o = {
-                    	uri: uri
-                    	, data: data
-                    	, users: users
-                    };
-                    var socket = require('socket.io-client')('http://' + global.registry.uri);
-                    if (uri.indexOf("#") > -1) socket.emit("#send", JSON.stringify(o));*/
-                }
-            };
+            x.io = app.io;
 
             var myfn = parser.parse(x[api.method]);
             var response = {};

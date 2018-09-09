@@ -96,17 +96,7 @@ module.exports = function (app, express, Config) {
 
     _App.cors = require('cors');
 
-    _App.IO = {
-        send: function (uri, data, users) {
-            var o = {
-                uri: uri,
-                data: data,
-                users: users
-            };
-            var socket = require('socket.io-client')('http://' + getIPAddress() + ':' + Manifest.server.port);
-            if (uri.indexOf("#") > -1) socket.emit("#send", JSON.stringify(o));
-        }
-    };
+    _App.io = app.io;
 
     _App.using = function (unit) {
         //built in classes
@@ -181,20 +171,7 @@ module.exports = function (app, express, Config) {
                     return self._model;
                 }
             };
-            // deprecated
-            //_App[Manifest.api[i]].DB = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "db" +sep + "DB.js");
-            //_App[Manifest.api[i]].DB = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "db" + sep + "lib" + sep + "index.js");
-            _App[Manifest.api[i]].IO = {
-                send: function (uri, data, users) {
-                    var o = {
-                        uri: uri,
-                        data: data,
-                        users: users
-                    };
-                    var socket = require('socket.io-client')(global.registry.uri);
-                    if (uri.indexOf("#") > -1) socket.emit("#send", JSON.stringify(o));
-                }
-            };
+
             _App[Manifest.api[i]].using = function (unit) {
                 return require(global.ROOT + sep + 'node_modules' + sep + unit);
             };

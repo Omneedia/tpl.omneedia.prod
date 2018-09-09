@@ -118,6 +118,8 @@ module.exports = function (NET, cluster, Config) {
             });
         };
 
+        app.io = io;
+
         app.use(session);
 
         // share session with socket.io
