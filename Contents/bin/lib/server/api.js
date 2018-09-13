@@ -27,7 +27,7 @@ module.exports = function (app, express, Config) {
                     var x = require(global.ROOT + sep + "node_modules" + sep + "@omneedia" + sep + "db" + sep + api.action + ".js");
                 } else
                     var x = require(global.PROJECT_API + sep + api.action + ".js");
-                x.fingerprint = req.session.fingerprint;
+                //x.fingerprint = req.session.fingerprint;
             } catch (e) {
                 return resp.status(400).end('BAD_REQUEST');
             };
@@ -218,7 +218,7 @@ module.exports = function (app, express, Config) {
     var sqlinjection = function (req, res, next) {
         var headers = req.headers.cookie.split('; ');
         var cookie_header = -1;
-        for (var i = 0; i < headers.length; i++) {
+        /*for (var i = 0; i < headers.length; i++) {
             if (headers[i].indexOf('z=') > -1) cookie_header = headers[i].split('z=')[1];
         };
         if (!req.session.fingerprint) return res.status(401).end('UNAUTHORIZED');
@@ -226,7 +226,7 @@ module.exports = function (app, express, Config) {
             if (cookie_header != req.session.fingerprint) return res.status(401).end('UNAUTHORIZED');
         } else {
             if (req.session.fingerprint != req.headers.z) return res.status(401).end('UNAUTHORIZED');
-        };
+        };*/
 
         function hasSql(value) {
 
