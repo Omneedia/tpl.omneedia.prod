@@ -21,6 +21,9 @@ module.exports = function (NET, cluster, Config) {
 
     function init_thread() {
 
+        // compression
+        app.use(require('compression')());
+
         var path = require('path');
         var fs = require('fs');
 
@@ -157,9 +160,6 @@ module.exports = function (NET, cluster, Config) {
                 console.log('IP address ' + ipAddress + ' is considered to be malicious, URL: ' + url);
             }
         }));
-
-        // compression
-        app.use(require('compression')());
 
         // API
 
