@@ -107,12 +107,10 @@ module.exports = function (NET, cluster, Config) {
         if (Config.session.indexOf('mongodb://') > -1) {
             var MongoStore = require('connect-mongo')(Session);
             var session = Session({
-                key: 'omneedia',
                 secret: 'omneedia_rulez',
                 saveUninitialized: true,
                 resave: true,
                 cookie: {
-                    path: '/',
                     maxAge: 1000 * 60 * 24 // 24 hours
                 },
                 store: new MongoStore({
