@@ -11,6 +11,7 @@
     "@omneedia/socket.io-adapter-mongo": "^2.0.0",
     "@omneedia/authom": "1.1.2",
     "@omneedia/mailer": "1.1.0",
+    "@omneedia/scraper": "",
     "nodemailer": "4.6.7",
     "nodemailer-smtp-transport": "2.7.4",
     "body-parser": "1.17.2",
