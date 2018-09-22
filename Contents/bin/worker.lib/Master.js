@@ -1,12 +1,6 @@
 module.exports = function (NET, cluster, Config) {
 
     var port = process.env.port;
-    if (!port) port = 3000;
-
-    var numCPUs = require('os').cpus().length;
-    var net = require('net');
-
-    var numCPUs = 1;
 
     function init() {
 
@@ -64,6 +58,20 @@ module.exports = function (NET, cluster, Config) {
 
     };
 
-    init();
+    var numCPUs = require('os').cpus().length;
+    var net = require('net');
+
+    var numCPUs = 1;
+
+    if (port == "auto") {
+        var fp = require("find-free-port")
+        fp(3000, function (err, freePort) {
+            port = freePort;
+            init();
+        });
+    } else {
+        if (!port) port = 3000;
+        init();
+    }
 
 };
