@@ -217,8 +217,13 @@ module.exports = function (app, express, Config) {
     };
 
     var sqlinjection = function (req, res, next) {
-        var headers = req.headers.cookie.split('; ');
-        var cookie_header = -1;
+        try {
+            var headers = req.headers.cookie.split('; ');
+            var cookie_header = -1;
+        } catch (e) {
+
+        }
+
         /*for (var i = 0; i < headers.length; i++) {
             if (headers[i].indexOf('z=') > -1) cookie_header = headers[i].split('z=')[1];
         };
