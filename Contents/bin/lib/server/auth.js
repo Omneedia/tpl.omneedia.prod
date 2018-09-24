@@ -31,27 +31,20 @@ module.exports = function (app) {
             };
             Officer.getProfile = function (user, cb) {
                 var response = [];
-                if (cb) {
-                    fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                        var profiler = JSON.parse(r.toString('utf-8'));
-                        for (var el in profiler.profile) {
-                            var p = profiler.profile[el];
-                            if (p.indexOf(user) > -1) response.push(el);
-                        };
-                        cb(response);
-                    })
-                } else {
-                    // DO NOT USE ANYMORE
-                    // WILL BE DEPRECATED
-                    if (fs.existsSync(global.PROJECT_AUTH + sep + 'Profiler.json')) {
-                        var profiler = JSON.parse(require('fs').readFileSync(global.PROJECT_AUTH + sep + 'Profiler.json', 'utf-8'));
-                        for (var el in profiler.profile) {
-                            var p = profiler.profile[el];
-                            if (p.indexOf(user) > -1) response.push(el);
-                        };
-                    };
-                    return response;
-                }
+                // DEPRECATED
+                if (!cb) return response;
+
+                global.request({
+                    uri: global.Config.host + '/api/profile',
+                    method: "POST",
+                    form: {
+                        user: user,
+                        task: global.Config.task
+                    }
+                }, function (e, r, b) {
+                    cb(JSON.parse(b));
+                });
+
             };
             Officer.login(profile, function (err, response) {
                 if (err) return cb(err);
