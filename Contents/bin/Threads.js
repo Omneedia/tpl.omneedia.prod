@@ -174,6 +174,17 @@ module.exports = function (NET, cluster, Config) {
             });
         });
 
+        app.get('/Contents/registry.json', function (req, res) {
+            res.set('Content-Type', 'application/json');
+            //if (!req.headers.referer) return res.status(405).end('METHOD_NOT_ALLOWED');
+            var p = {};
+            for (var el in global.settings.registry) {
+                if (el.indexOf('!') == -1) p[el] = global.settings.registry[el];
+            };
+            res.set('Content-Type', 'text/javascript');
+            res.end(JSON.stringify(p, null, 4));
+        });
+
         console.log('\n\t* Launched.\n');
 
     };
