@@ -7,6 +7,65 @@ module.exports = function (app) {
 
     var util = require('../util');
 
+    // officer
+    global.officer = {
+        using: function (unit) {
+            //built in classes
+            if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
+            if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
+            try {
+                return require(global.ROOT + sep + 'node_modules' + sep + unit);
+            } catch (e) {
+                return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
+            };
+        },
+        getProfile: function (user, cb) {
+            var response = [];
+            if (cb) {
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    for (var el in profiler.profile) {
+                        var p = profiler.profile[el];
+                        if (p.indexOf(user) > -1) response.push(el);
+                    };
+                    cb(response);
+                })
+            }
+        },
+        profiles: {
+            getAll: function (cb) {
+                global.request({
+                    uri: global.Config.host + '/api/profile/all',
+                    method: "POST",
+                    form: {
+                        task: global.Config.task
+                    }
+                }, function (e, r, b) {
+                    if (e) return cb(e);
+                    cb(null, JSON.parse(b));
+                });
+            },
+            get: function (o, cb) {
+                if (!o) cb("NO_PROFILE_ID");
+                global.request({
+                    uri: global.Config.host + '/api/profile/1',
+                    method: "POST",
+                    form: {
+                        task: global.Config.task
+                    }
+                }, function (e, r, b) {
+                    if (e) return cb(e);
+                    cb(null, JSON.parse(b));
+                });
+            }
+        }
+    };
+
+    var _Officer = require(global.PROJECT_AUTH + sep + "Officer" + ".js");
+    if (_Officer.published) {
+        global.officer = Object.assign(_Officer.published, global.officer);
+    };
+
     global.Auth = {
         officer: function (req, profile, fn) {
             this.register(req, profile, function (err, response) {
@@ -28,6 +87,34 @@ module.exports = function (app) {
                 } catch (e) {
                     return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
                 };
+            };
+            // Profiles
+            Officer.profiles = {
+                getAll: function (cb) {
+                    global.request({
+                        uri: global.Config.host + '/api/profile/all',
+                        method: "POST",
+                        form: {
+                            task: global.Config.task
+                        }
+                    }, function (e, r, b) {
+                        if (e) return cb(e);
+                        cb(null, JSON.parse(b));
+                    });
+                },
+                get: function (o, cb) {
+                    if (!o) cb("NO_PROFILE_ID");
+                    global.request({
+                        uri: global.Config.host + '/api/profile/1',
+                        method: "POST",
+                        form: {
+                            task: global.Config.task
+                        }
+                    }, function (e, r, b) {
+                        if (e) return cb(e);
+                        cb(null, JSON.parse(b));
+                    });
+                }
             };
             Officer.getProfile = function (user, cb) {
                 var response = [];
