@@ -20,11 +20,6 @@ module.exports = function (NET, cluster, Config) {
     var app = express();
     var server = app.listen(0, NET.getIPAddress());
 
-    app.use('/', function (req, res) {
-        res.set("Content-Type", 'text/html');
-        res.end('<script>window.setTimeout(function() {location.reload();},1000);</script>Site is warming up...');
-    });
-
     function init_thread() {
 
         // compression
