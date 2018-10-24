@@ -51,7 +51,8 @@ module.exports = function (app) {
                     uri: global.Config.host + '/api/profile/1',
                     method: "POST",
                     form: {
-                        task: global.Config.task
+                        task: global.Config.task,
+                        profile: o
                     }
                 }, function (e, r, b) {
                     if (e) return cb(e);
@@ -108,7 +109,8 @@ module.exports = function (app) {
                         uri: global.Config.host + '/api/profile/1',
                         method: "POST",
                         form: {
-                            task: global.Config.task
+                            task: global.Config.task,
+                            profile: o
                         }
                     }, function (e, r, b) {
                         if (e) return cb(e);
