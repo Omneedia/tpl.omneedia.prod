@@ -96,12 +96,11 @@ module.exports = function (app, express, Config) {
                                 upload_blob(list, ndx + 1, cb);
                             } else {
                                 x.file.reader(list[ndx].docId, function (err, up) {
-                                    console.log(err);
+
                                     up.docId = list[ndx].docId;
                                     up.filename = list[ndx].filename;
                                     x.using('db').post(db, tb, up, function (err, x) {
-                                        console.log(err);
-                                        console.log(x);
+
                                         if (err) results.push({
                                             docId: list[ndx].docId,
                                             status: "ERR",
