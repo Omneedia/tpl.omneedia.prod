@@ -3,6 +3,35 @@ module.exports = function (app, express, Config) {
     var path = require('path');
     var sep = "/";
 
+    var builtin = [
+        "assert",
+        "buffer",
+        "child_process",
+        "cluster",
+        "crypto",
+        "dgram",
+        "dns",
+        "events",
+        "fs",
+        "http",
+        "https",
+        "net",
+        "os",
+        "path",
+        "querystring",
+        "readline",
+        "stream",
+        "string_decoder",
+        "timers",
+        "tls",
+        "tty",
+        "url",
+        "util",
+        "v8",
+        "vm",
+        "zlib"
+    ];
+
     function processRoute(req, resp, next) {
 
         var fs = require('fs');
@@ -35,6 +64,7 @@ module.exports = function (app, express, Config) {
             x.session = req.session;
             x.using = function (unit) {
                 //built in classes
+                if (builtin.indexOf(unit) > -1) return require(unit);
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
                 if (unit == "scraper") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'scraper' + sep + 'lib' + sep + 'index.js');
                 if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
