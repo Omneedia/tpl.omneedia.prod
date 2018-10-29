@@ -8,7 +8,15 @@ module.exports = function (app, express, Config) {
     //app.use(express.static(OS.tmpdir() + sep + 'tempfiles'));
 
     var _App = require(global.PROJECT_SYSTEM + sep + "app.js");
-
+    var request = require('request');
+    if (process.env['proxy']) {
+        _App.request = request.defaults({
+            proxy: process.env['proxy'],
+            encoding: null
+        })
+    } else _App.request = request.defaults({
+        encoding: null
+    });
     _App.file = {
         reader: function (ff, cb) {
             var fs = require('fs');

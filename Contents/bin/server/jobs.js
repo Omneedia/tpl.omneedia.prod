@@ -65,14 +65,13 @@ module.exports = function (NET, cluster, Config) {
 
         var request = require('request');
         if (process.env['proxy']) {
-
-            request.defaults({
-                proxy: process.env['proxy']
+            _App.request = request.defaults({
+                proxy: process.env['proxy'],
+                encoding: null
             })
-
-        };
-
-        _App.request = request;
+        } else _App.request = request.defaults({
+            encoding: null
+        });
 
         _App.api = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "api");
 
@@ -209,8 +208,7 @@ module.exports = function (NET, cluster, Config) {
             }
         };
 
-        console.log('\n\t- Contacting manager')
-        global.request(Config.host + '/io.uri', function (e, r, io_host) {
+        console.log('\n\t- Contacting manager') global.request(Config.host + '/io.uri', function (e, r, io_host) {
 
             global.request(Config.host + '/session.uri', function (e, r, Config_session) {
 

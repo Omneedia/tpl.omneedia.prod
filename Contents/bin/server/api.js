@@ -33,6 +33,15 @@ module.exports = function (app, express, Config) {
             };
             x.auth = req.session.user;
             x.session = req.session;
+            var request = require('request');
+            if (process.env['proxy']) {
+                x.request = request.defaults({
+                    proxy: process.env['proxy'],
+                    encoding: null
+                })
+            } else x.request = request.defaults({
+                encoding: null
+            });
             x.using = function (unit) {
                 //built in classes
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');

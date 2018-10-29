@@ -19,6 +19,15 @@ module.exports = function (app) {
             var off = "Officer";
             var fs = require('fs');
             var Officer = require(global.PROJECT_AUTH + sep + off + ".js");
+            var request = require('request');
+            if (process.env['proxy']) {
+                Officer.request = request.defaults({
+                    proxy: process.env['proxy'],
+                    encoding: null
+                })
+            } else Officer.request = request.defaults({
+                encoding: null
+            });
             Officer.using = function (unit) {
                 //built in classes
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');

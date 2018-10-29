@@ -190,7 +190,8 @@ module.exports = function (NET, cluster, Config) {
     };
 
     // register worker with manager
-    console.log('\n\t- Contacting manager')
+    console.log('\n\t- Contacting manager');
+
     global.request(Config.host + '/io.uri', function (e, r, io_host) {
 
         global.request(Config.host + '/session.uri', function (e, r, Config_session) {
