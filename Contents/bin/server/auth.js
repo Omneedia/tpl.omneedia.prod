@@ -7,6 +7,42 @@ module.exports = function (app) {
 
     var util = require('../util');
 
+    // officer
+    global.officer = {
+        getProfile: function (user, cb) {
+            var response = [];
+            if (cb) {
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    for (var el in profiler.profile) {
+                        var p = profiler.profile[el];
+                        if (p.indexOf(user) > -1) response.push(el);
+                    };
+                    cb(response);
+                })
+            }
+        },
+        profiles: {
+            getAll: function (cb) {
+                var fs = require('fs');
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    cb(null, profiler);
+                })
+            },
+            get: function (o, cb) {
+                if (!o) cb("NO_PROFILE_ID");
+                var fs = require('fs');
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    if (profiler.profiles.indexOf(o) == -1) return cb("PROFILE_NOT_FOUND");
+                    cb(null, profiler.profile[o]);
+                })
+            }
+        }
+    };
+    global.officer = require(__dirname + '/global.js')(global.officer);
+
     global.Auth = {
         officer: function (req, profile, fn) {
             this.register(req, profile, function (err, response) {
@@ -28,6 +64,8 @@ module.exports = function (app) {
             } else Officer.request = request.defaults({
                 encoding: null
             });
+            Officer = require(__dirname + '/global.js')(Officer);
+            /*
             Officer.using = function (unit) {
                 //built in classes
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
@@ -38,6 +76,7 @@ module.exports = function (app) {
                     return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
                 };
             };
+            */
             Officer.getProfile = function (user, cb) {
                 var response = [];
                 // DEPRECATED

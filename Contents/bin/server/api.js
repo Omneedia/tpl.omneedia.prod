@@ -33,7 +33,7 @@ module.exports = function (app, express, Config) {
             };
             x.auth = req.session.user;
             x.session = req.session;
-            var request = require('request');
+            /*var request = require('request');
             if (process.env['proxy']) {
                 x.request = request.defaults({
                     proxy: process.env['proxy'],
@@ -41,130 +41,132 @@ module.exports = function (app, express, Config) {
                 })
             } else x.request = request.defaults({
                 encoding: null
-            });
-            x.using = function (unit) {
-                //built in classes
-                if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
-                if (unit == "scraper") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'scraper' + sep + 'lib' + sep + 'index.js');
-                if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
-                try {
-                    return require(global.ROOT + sep + 'node_modules' + sep + unit);
-                } catch (e) {
-                    return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
-                };
-            };
-
-            // Upload
-            x.file = {
-                writer: function (ff, cbo) {
-                    var set, db, tb;
-                    var results = [];
-
-                    function upload_blob(list, ndx, cb) {
-                        if (!list[ndx]) {
-                            cb();
-                            return;
+            });*/
+            x = require(__dirname + '/global.js')(x);
+            /*
+                        x.using = function (unit) {
+                            //built in classes
+                            if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
+                            if (unit == "scraper") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'scraper' + sep + 'lib' + sep + 'index.js');
+                            if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
+                            try {
+                                return require(global.ROOT + sep + 'node_modules' + sep + unit);
+                            } catch (e) {
+                                return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
+                            };
                         };
-                        x.using('db').query(db, 'select docId from ' + tb + ' where docId="' + list[ndx].docId + '"', function (err, result) {
-                            if (result.length > 0) {
-                                // already uploaded
-                                results.push({
-                                    docId: list[ndx].docId,
-                                    status: "ALREADY_UPLOADED"
+
+                        // Upload
+                        x.file = {
+                            writer: function (ff, cbo) {
+                                var set, db, tb;
+                                var results = [];
+
+                                function upload_blob(list, ndx, cb) {
+                                    if (!list[ndx]) {
+                                        cb();
+                                        return;
+                                    };
+                                    x.using('db').query(db, 'select docId from ' + tb + ' where docId="' + list[ndx].docId + '"', function (err, result) {
+                                        if (result.length > 0) {
+                                            // already uploaded
+                                            results.push({
+                                                docId: list[ndx].docId,
+                                                status: "ALREADY_UPLOADED"
+                                            });
+                                            upload_blob(list, ndx + 1, cb);
+                                        } else {
+                                            x.file.reader(list[ndx].docId, function (err, up) {
+                                                console.log(err);
+                                                up.docId = list[ndx].docId;
+                                                up.filename = list[ndx].filename;
+                                                x.using('db').post(db, tb, up, function (err, x) {
+                                                    console.log(err);
+                                                    console.log(x);
+                                                    if (err) results.push({
+                                                        docId: list[ndx].docId,
+                                                        status: "ERR",
+                                                        results: err
+                                                    });
+                                                    else results.push({
+                                                        docId: list[ndx].docId,
+                                                        status: "OK",
+                                                        results: x
+                                                    })
+                                                    upload_blob(list, ndx + 1, cb);
+                                                });
+                                            });
+                                        }
+                                    });
+                                };
+                                if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
+                                if (!Array.isArray(ff)) ff = [ff];
+                                set = global.settings['docs'][0];
+                                db = set.split('://')[0];
+                                tb = set.split('://')[1];
+                                upload_blob(ff, 0, function () {
+                                    cbo(results);
                                 });
-                                upload_blob(list, ndx + 1, cb);
-                            } else {
-                                x.file.reader(list[ndx].docId, function (err, up) {
-                                    console.log(err);
-                                    up.docId = list[ndx].docId;
-                                    up.filename = list[ndx].filename;
-                                    x.using('db').post(db, tb, up, function (err, x) {
-                                        console.log(err);
-                                        console.log(x);
-                                        if (err) results.push({
-                                            docId: list[ndx].docId,
-                                            status: "ERR",
-                                            results: err
-                                        });
-                                        else results.push({
-                                            docId: list[ndx].docId,
-                                            status: "OK",
-                                            results: x
-                                        })
-                                        upload_blob(list, ndx + 1, cb);
+                            },
+                            reader: function (ff, cb) {
+                                var fs = require('fs');
+                                if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
+                                if (!isObject(ff)) {
+                                    ff = {
+                                        docId: ff
+                                    }
+                                };
+                                // Check if the file is in the upload
+                                var mongoose = require('mongoose');
+                                var Grid = require('gridfs-stream');
+                                Grid.mongo = mongoose.mongo;
+                                var conn = mongoose.createConnection(Config.session + 'upload');
+                                conn.once('open', function () {
+                                    var gfs = Grid(conn.db);
+                                    gfs.files.find({
+                                        filename: ff.docId
+                                    }).toArray(function (err, files) {
+                                        if (err) return cb.status(404).end('NOT_FOUND');
+                                        if (files.length > 0) {
+                                            var readstream = gfs.createReadStream({
+                                                filename: ff.docId
+                                            });
+                                            readstream.on('error', function (err) {
+                                                return cb('NOT_FOUND', null);
+                                            });
+                                            const bufs = [];
+                                            readstream.on('data', function (chunk) {
+                                                bufs.push(chunk);
+                                            });
+                                            readstream.on('end', function () {
+                                                const fbuf = Buffer.concat(bufs);
+                                                var response = {
+                                                    filename: files[0].filename,
+                                                    type: files[0].contentType,
+                                                    size: files[0].length,
+                                                    _blob: "data:" + files[0].contentType + ";base64," + fbuf.toString('base64')
+                                                };
+                                                cb(null, response);
+                                            });
+                                        } else {
+                                            // The file is not in the upload
+                                            var set = global.settings['docs'][0];
+                                            var db = set.split('://')[0];
+                                            var tb = set.split('://')[1];
+                                            x.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
+                                                if (r.length == 0) return cb('NOT_FOUND', null);
+                                                r[0].docId = ff.docId;
+                                                cb(null, r[0]);
+                                            });
+                                        }
                                     });
                                 });
                             }
-                        });
-                    };
-                    if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
-                    if (!Array.isArray(ff)) ff = [ff];
-                    set = global.settings['docs'][0];
-                    db = set.split('://')[0];
-                    tb = set.split('://')[1];
-                    upload_blob(ff, 0, function () {
-                        cbo(results);
-                    });
-                },
-                reader: function (ff, cb) {
-                    var fs = require('fs');
-                    if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
-                    if (!isObject(ff)) {
-                        ff = {
-                            docId: ff
-                        }
-                    };
-                    // Check if the file is in the upload
-                    var mongoose = require('mongoose');
-                    var Grid = require('gridfs-stream');
-                    Grid.mongo = mongoose.mongo;
-                    var conn = mongoose.createConnection(Config.session + 'upload');
-                    conn.once('open', function () {
-                        var gfs = Grid(conn.db);
-                        gfs.files.find({
-                            filename: ff.docId
-                        }).toArray(function (err, files) {
-                            if (err) return cb.status(404).end('NOT_FOUND');
-                            if (files.length > 0) {
-                                var readstream = gfs.createReadStream({
-                                    filename: ff.docId
-                                });
-                                readstream.on('error', function (err) {
-                                    return cb('NOT_FOUND', null);
-                                });
-                                const bufs = [];
-                                readstream.on('data', function (chunk) {
-                                    bufs.push(chunk);
-                                });
-                                readstream.on('end', function () {
-                                    const fbuf = Buffer.concat(bufs);
-                                    var response = {
-                                        filename: files[0].filename,
-                                        type: files[0].contentType,
-                                        size: files[0].length,
-                                        _blob: "data:" + files[0].contentType + ";base64," + fbuf.toString('base64')
-                                    };
-                                    cb(null, response);
-                                });
-                            } else {
-                                // The file is not in the upload
-                                var set = global.settings['docs'][0];
-                                var db = set.split('://')[0];
-                                var tb = set.split('://')[1];
-                                x.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
-                                    if (r.length == 0) return cb('NOT_FOUND', null);
-                                    r[0].docId = ff.docId;
-                                    cb(null, r[0]);
-                                });
-                            }
-                        });
-                    });
-                }
-            };
+                        };
 
-            // Sockets API
-            x.io = app.io;
-
+                        // Sockets API
+                        x.io = app.io;
+            */
             var myfn = parser.parse(x[api.method]);
             var response = {};
             response.params = myfn.args;
