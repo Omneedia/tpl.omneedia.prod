@@ -9,74 +9,39 @@ module.exports = function (app) {
 
     // officer
     global.officer = {
-        using: function (unit) {
-            //built in classes
-            if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
-            if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
-            try {
-                return require(global.ROOT + sep + 'node_modules' + sep + unit);
-            } catch (e) {
-                return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
-            };
-        },
         getProfile: function (user, cb) {
             var response = [];
-            // DEPRECATED
-            if (!cb) return response;
-
-            global.request({
-                uri: global.Config.host + '/api/profile',
-                method: "POST",
-                form: {
-                    user: user,
-                    task: global.Config.task
-                }
-            }, function (e, r, b) {
-                cb(JSON.parse(b));
-            });
+            if (cb) {
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    for (var el in profiler.profile) {
+                        var p = profiler.profile[el];
+                        if (p.indexOf(user) > -1) response.push(el);
+                    };
+                    cb(response);
+                })
+            }
         },
         profiles: {
             getAll: function (cb) {
-                global.request({
-                    uri: global.Config.host + '/api/profile/all',
-                    method: "POST",
-                    form: {
-                        task: global.Config.task
-                    }
-                }, function (e, r, b) {
-                    console.log('****** ' + global.Config.host + '/api/profile/all');
-                    console.log(e);
-                    console.log(b);
-                    console.log('******');
-                    if (e) return cb(e);
-                    cb(null, JSON.parse(b));
-                });
+                var fs = require('fs');
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    cb(null, profiler);
+                })
             },
             get: function (o, cb) {
                 if (!o) cb("NO_PROFILE_ID");
-                global.request({
-                    uri: global.Config.host + '/api/profile/1',
-                    method: "POST",
-                    form: {
-                        task: global.Config.task,
-                        profile: o
-                    }
-                }, function (e, r, b) {
-                    console.log('****** ' + global.Config.host + '/api/profile/all');
-                    console.log(e);
-                    console.log(b);
-                    console.log('******');
-                    if (e) return cb(e);
-                    cb(null, JSON.parse(b));
-                });
+                var fs = require('fs');
+                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                    var profiler = JSON.parse(r.toString('utf-8'));
+                    if (profiler.profiles.indexOf(o) == -1) return cb("PROFILE_NOT_FOUND");
+                    cb(null, profiler.profile[o]);
+                })
             }
         }
     };
-
-    var _Officer = require(global.PROJECT_AUTH + sep + "Officer" + ".js");
-    if (_Officer.published) {
-        global.officer = Object.assign(_Officer.published, global.officer);
-    };
+    global.officer = require(__dirname + '/global.js')(global.officer);
 
     global.Auth = {
         officer: function (req, profile, fn) {
@@ -90,6 +55,17 @@ module.exports = function (app) {
             var off = "Officer";
             var fs = require('fs');
             var Officer = require(global.PROJECT_AUTH + sep + off + ".js");
+            var request = require('request');
+            if (process.env['proxy']) {
+                Officer.request = request.defaults({
+                    proxy: process.env['proxy'],
+                    encoding: null
+                })
+            } else Officer.request = request.defaults({
+                encoding: null
+            });
+            Officer = require(__dirname + '/global.js')(Officer);
+            /*
             Officer.using = function (unit) {
                 //built in classes
                 if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
@@ -100,35 +76,7 @@ module.exports = function (app) {
                     return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
                 };
             };
-            // Profiles
-            Officer.profiles = {
-                getAll: function (cb) {
-                    global.request({
-                        uri: global.Config.host + '/api/profile/all',
-                        method: "POST",
-                        form: {
-                            task: global.Config.task
-                        }
-                    }, function (e, r, b) {
-                        if (e) return cb(e);
-                        cb(null, JSON.parse(b));
-                    });
-                },
-                get: function (o, cb) {
-                    if (!o) cb("NO_PROFILE_ID");
-                    global.request({
-                        uri: global.Config.host + '/api/profile/1',
-                        method: "POST",
-                        form: {
-                            task: global.Config.task,
-                            profile: o
-                        }
-                    }, function (e, r, b) {
-                        if (e) return cb(e);
-                        cb(null, JSON.parse(b));
-                    });
-                }
-            };
+            */
             Officer.getProfile = function (user, cb) {
                 var response = [];
                 // DEPRECATED
@@ -186,35 +134,29 @@ module.exports = function (app) {
         if (req.user) return next();
         res.end('{"response":"NOT_LOGIN"}');
     };
-    /*
-        app.get('/account', ensureAuthenticated, function (req, res) {
-            if (!req.user) req.user = req.session.user;
-            var response = [];
-            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                if (e) return res.end(JSON.stringify(req.user));
-                var profiler = JSON.parse(r.toString('utf-8'));
-                for (var el in profiler.profile) {
-                    var p = profiler.profile[el];
-                    if (p.indexOf(req.user.mail.split('@')[0]) > -1) response.push(el);
-                };
-                req.user.profiles = response;
-                res.end(JSON.stringify(req.user));
-            });
+
+    app.get('/account', ensureAuthenticated, function (req, res) {
+        if (!req.user) req.user = req.session.user;
+        var response = [];
+        fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+            if (e) return res.end(JSON.stringify(req.user));
+            var profiler = JSON.parse(r.toString('utf-8'));
+            for (var el in profiler.profile) {
+                var p = profiler.profile[el];
+                if (p.indexOf(req.user.mail.split('@')[0]) > -1) response.push(el);
+            };
+            req.user.profiles = response;
+            res.end(JSON.stringify(req.user));
         });
-        */
+    });
+
     app.post('/account', ensureAuthenticated, function (req, res) {
 
         if (!req.user) req.user = req.session.user;
         var response = [];
-        global.request({
-            uri: global.Config.host + '/api/profile/all',
-            method: "POST",
-            form: {
-                task: global.Config.task
-            }
-        }, function (e, r, b) {
-            if (e) return cb(e);
-            var profiler = JSON.parse(b);
+        fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+            if (e) return res.end(JSON.stringify(req.user));
+            var profiler = JSON.parse(r.toString('utf-8'));
             for (var el in profiler.profile) {
                 var p = profiler.profile[el];
                 if (p.indexOf(req.user.mail.split('@')[0]) > -1) response.push(el);

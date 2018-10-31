@@ -12,35 +12,6 @@ module.exports = function (NET, cluster, Config) {
     String = require(__dirname + '/../framework/strings')();
     require(__dirname + '/../framework/utils');
 
-    var builtin = [
-        "assert",
-        "buffer",
-        "child_process",
-        "cluster",
-        "crypto",
-        "dgram",
-        "dns",
-        "events",
-        "fs",
-        "http",
-        "https",
-        "net",
-        "os",
-        "path",
-        "querystring",
-        "readline",
-        "stream",
-        "string_decoder",
-        "timers",
-        "tls",
-        "tty",
-        "url",
-        "util",
-        "v8",
-        "vm",
-        "zlib"
-    ];
-
     require('../globals');
 
     console.log('');
@@ -49,147 +20,7 @@ module.exports = function (NET, cluster, Config) {
         var job = process.env.job;
         if (!job) return false;
         var _App = require(global.PROJECT_SYSTEM + '/../jobs/' + job);
-
-        _App.using = function (unit) {
-            //built in classes
-            if (builtin.indexOf(unit) > -1) return require(unit);
-            if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
-            if (unit == "scraper") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'scraper' + sep + 'lib' + sep + 'index.js');
-            if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
-            try {
-                return require(global.ROOT + sep + 'node_modules' + sep + unit);
-            } catch (e) {
-                return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
-            };
-        };
-
-        var request = require('request');
-        if (process.env['proxy']) {
-
-            request.defaults({
-                proxy: process.env['proxy']
-            })
-
-        };
-
-        _App.request = request;
-
-        _App.api = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "api");
-
-        global.manifest = manifest;
-
-        for (var i = 0; i < global.manifest.api.length; i++) {
-            if (global.manifest.api[i].indexOf('@') == -1) {
-
-                _App[global.manifest.api[i]] = require(global.PROJECT_API + sep + global.manifest.api[i] + '.js');
-
-                var self = _App[global.manifest.api[i]].model = {
-                    _model: {
-                        "type": "raw",
-                        "metaData": {
-                            "idProperty": -1,
-                            "totalProperty": "total",
-                            "successProperty": "success",
-                            "root": "data",
-                            "fields": []
-                        },
-                        "total": 0,
-                        "data": [],
-                        "success": false,
-                        "message": "failure"
-                    },
-                    init: function () {
-                        self._model.metaData.fields = [];
-                        self._model.data = [];
-                        self._model.success = false;
-                        self._model.message = "failure";
-                    },
-                    fields: {
-                        add: function (o) {
-                            if (o === Object(o))
-                                self._model.metaData.fields.push(o);
-                            else {
-                                var t = o.split(',');
-                                if (t.length == 3) {
-                                    var o = {
-                                        name: t[0],
-                                        type: t[1],
-                                        length: t[2]
-                                    };
-                                } else {
-                                    var o = {
-                                        name: o,
-                                        type: 'string',
-                                        length: 255
-                                    };
-                                };
-                                self._model.metaData.fields.push(o);
-                            }
-                        }
-                    },
-                    data: {
-                        add: function (o) {
-                            self._model.data.push(o);
-                            self._model.total = self._model.data.length;
-                        }
-                    },
-                    get: function () {
-                        self._model.success = true;
-                        self._model.message = "success";
-                        return self._model;
-                    }
-                };
-                _App[global.manifest.api[i]].IO = {
-                    send: function (uri, data, users) {
-                        var o = {
-                            uri: uri,
-                            data: data,
-                            users: users
-                        };
-                        var socket = require('socket.io-client')(global.registry.uri);
-                        if (uri.indexOf("#") > -1) socket.emit("#send", JSON.stringify(o));
-                    }
-                };
-
-                _App[global.manifest.api[i]].using = function (unit) {
-                    //built in classes
-                    if (builtin.indexOf(unit) > -1) return require(unit);
-                    if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
-                    if (unit == "scraper") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'scraper' + sep + 'lib' + sep + 'index.js');
-                    if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
-                    try {
-                        return require(global.ROOT + sep + 'node_modules' + sep + unit);
-                    } catch (e) {
-                        return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
-                    };
-                };
-            }
-        };
-
-
-        _App.tmpdir = function (filename) {
-            var OS = require('os');
-            return OS.tmpdir();
-        };
-
-        _App.temp = function (ext) {
-            var uid = Math.uuid();
-            var dir = _App.tmpdir() + sep + "tempfiles";
-            fs.mkdir(dir, function () {});
-            var filename = uid;
-            if (ext) filename += "." + ext;
-            return {
-                uid: uid,
-                filename: filename,
-                dir: dir,
-                path: dir + sep + filename,
-                url: "/tmp/" + filename
-            };
-        };
-
-        _App.getData = function () {
-            return "/data";
-        };
+        _App = require(__dirname + '/global.js')(_App);
 
         _App.util = require('../util');
 
@@ -209,7 +40,7 @@ module.exports = function (NET, cluster, Config) {
             }
         };
 
-        console.log('\n\t- Contacting manager')
+        console.log('\n\t- Contacting manager');
         global.request(Config.host + '/io.uri', function (e, r, io_host) {
 
             global.request(Config.host + '/session.uri', function (e, r, Config_session) {
