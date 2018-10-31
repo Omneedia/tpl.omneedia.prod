@@ -203,5 +203,3 @@ module.exports = function (app, express, Config) {
     }
 
 };
-};
-}
