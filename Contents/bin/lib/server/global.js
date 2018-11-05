@@ -34,6 +34,56 @@ module.exports = function (_App) {
         "zlib"
     ];
     _App.file = {
+        writer: function (ff, cbo) {
+            var set, db, tb;
+            var results = [];
+
+            function upload_blob(list, ndx, cb) {
+                if (!list[ndx]) {
+                    cb();
+                    return;
+                };
+                _App.using('db').query(db, 'select docId from ' + tb + ' where docId="' + list[ndx].docId + '"', function (err, result) {
+                    if (result.length > 0) {
+                        // already uploaded
+                        results.push({
+                            docId: list[ndx].docId,
+                            status: "ALREADY_UPLOADED"
+                        });
+                        upload_blob(list, ndx + 1, cb);
+                    } else {
+                        _App.file.reader(list[ndx].docId, function (err, up) {
+                            console.log(err);
+                            up.docId = list[ndx].docId;
+                            up.filename = list[ndx].filename;
+                            _App.using('db').post(db, tb, up, function (err, x) {
+                                console.log(err);
+                                console.log(x);
+                                if (err) results.push({
+                                    docId: list[ndx].docId,
+                                    status: "ERR",
+                                    results: err
+                                });
+                                else results.push({
+                                    docId: list[ndx].docId,
+                                    status: "OK",
+                                    results: x
+                                })
+                                upload_blob(list, ndx + 1, cb);
+                            });
+                        });
+                    }
+                });
+            };
+            if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
+            if (!Array.isArray(ff)) ff = [ff];
+            set = global.settings['docs'][0];
+            db = set.split('://')[0];
+            tb = set.split('://')[1];
+            upload_blob(ff, 0, function () {
+                cbo(results);
+            });
+        },
         reader: function (ff, cb) {
             var fs = require('fs');
             // If it's a string, the file is in the upload queue
@@ -48,38 +98,42 @@ module.exports = function (_App) {
                     }
                 };
                 // Check if the file is in the upload
-
-                // debug
-                var path = global.upload_dir + sep + ff.docId;
-                fs.stat(path, function (e, stat) {
-                    if (e) {
-                        // The file is not in the upload
-                        var set = global.settings['docs'][0];
-                        var db = set.split('://')[0];
-                        var tb = set.split('://')[1];
-                        console.log('select * from ' + tb + ' where docId="' + ff.docId + '"');
-                        _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
-                            console.log(r);
-                            if (r.length == 0) return cb.status(404).end('NOT_FOUND');
-                            cb.set('Content-disposition', 'inline; filename="' + r[0].filename + '"');
-                            cb.set("Content-Type", r[0].type);
-                            cb.set("Content-Length", r[0].size);
-                            var buf = new Buffer(r[0]._blob.split(';base64,')[1], 'base64');
-                            cb.end(buf);
-                        });
-                    } else {
-                        // Upload
-                        fs.readFile(path, function (err, buf) {
-                            if (err) cb.status(404).end('NOT_FOUND');
-                            else {
-                                var mime = require('mime-types')
-                                cb.set('Content-disposition', 'inline; filename="' + require('path').basename(path) + '"');
-                                cb.set("Content-Type", mime.lookup(require('path').basename(path)));
-                                cb.set("Content-Length", stat.size);
+                var mongoose = require('mongoose');
+                var Grid = require('gridfs-stream');
+                Grid.mongo = mongoose.mongo;
+                var conn = mongoose.createConnection(Config.session + 'upload');
+                conn.once('open', function () {
+                    var gfs = Grid(conn.db);
+                    gfs.files.find({
+                        filename: ff.docId
+                    }).toArray(function (err, files) {
+                        if (err) return cb.status(404).end('NOT_FOUND');
+                        if (files.length > 0) {
+                            var readstream = gfs.createReadStream({
+                                filename: ff.docId
+                            });
+                            readstream.on('error', function (err) {
+                                return cb.status(404).end('NOT_FOUND');
+                            });
+                            cb.set('Content-disposition', 'inline; filename="' + ff.docId + '"');
+                            cb.set("Content-Type", files[0].contentType);
+                            cb.set("Content-Length", files[0].length);
+                            readstream.pipe(cb);
+                        } else {
+                            // The file is not in the upload
+                            var set = global.settings['docs'][0];
+                            var db = set.split('://')[0];
+                            var tb = set.split('://')[1];
+                            _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
+                                if (r.length == 0) return cb.status(404).end('NOT_FOUND');
+                                cb.set('Content-disposition', 'inline; filename="' + r[0].filename + '"');
+                                cb.set("Content-Type", r[0].type);
+                                cb.set("Content-Length", r[0].size);
+                                var buf = new Buffer(r[0]._blob.split(';base64,')[1], 'base64');
                                 cb.end(buf);
-                            }
-                        });
-                    }
+                            });
+                        }
+                    });
                 });
 
             } else {
@@ -91,36 +145,51 @@ module.exports = function (_App) {
                         docId: ff
                     }
                 };
-                // Check if the file is in the upload
 
-                // debug
-                var path = global.upload_dir + sep + ff.docId;
-                fs.stat(path, function (e, stat) {
-                    if (e) {
-                        // The file is not in the upload
-                        var set = global.settings['docs'][0];
-                        var db = set.split('://')[0];
-                        var tb = set.split('://')[1];
-                        _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
-                            if (r.length == 0) return cb('NOT_FOUND', null);
-                            cb.end(null, JSON.stringify(r[0]));
-                        });
-                    } else {
-                        // Upload
-                        fs.readFile(path, function (err, buf) {
-                            if (err) cb('NOT_FOUND', null);
-                            else {
-                                var mime = require('mime-types');
+                // Check if the file is in the upload
+                var mongoose = require('mongoose');
+                var Grid = require('gridfs-stream');
+                Grid.mongo = mongoose.mongo;
+                var conn = mongoose.createConnection(Config.session + 'upload');
+                conn.once('open', function () {
+                    var gfs = Grid(conn.db);
+                    gfs.files.find({
+                        filename: ff.docId
+                    }).toArray(function (err, files) {
+                        if (err) return cb.status(404).end('NOT_FOUND');
+                        if (files.length > 0) {
+                            var readstream = gfs.createReadStream({
+                                filename: ff.docId
+                            });
+                            readstream.on('error', function (err) {
+                                return cb('NOT_FOUND', null);
+                            });
+                            const bufs = [];
+                            readstream.on('data', function (chunk) {
+                                bufs.push(chunk);
+                            });
+                            readstream.on('end', function () {
+                                const fbuf = Buffer.concat(bufs);
                                 var response = {
-                                    filename: require('path').basename(path),
-                                    type: mime.lookup(require('path').basename(path)),
-                                    size: stat.size,
-                                    _blob: "data:application/pdf;base64," + buf.toString('base64')
+                                    filename: files[0].filename,
+                                    type: files[0].contentType,
+                                    size: files[0].length,
+                                    _blob: "data:" + files[0].contentType + ";base64," + fbuf.toString('base64')
                                 };
-                                cb.end(null, JSON.stringify(response));
-                            }
-                        });
-                    }
+                                cb(null, response);
+                            });
+                        } else {
+                            // The file is not in the upload
+                            var set = global.settings['docs'][0];
+                            var db = set.split('://')[0];
+                            var tb = set.split('://')[1];
+                            _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
+                                if (r.length == 0) return cb('NOT_FOUND', null);
+                                r[0].docId = ff.docId;
+                                cb(null, r[0]);
+                            });
+                        }
+                    });
                 });
 
             };
@@ -351,21 +420,7 @@ module.exports = function (_App) {
                     return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
                 };
             };
-            /*
-                        if (!process.env.task) {
-                            var setmeup = require('../settings');
-                            setmeup.update(global.manifest, function (settings) {
-                                if (settings.config) app.config = settings.config;
-                                if (settings.db) app.db = settings.db;
-                                if (settings.auth) app.auth = settings.auth;
-                                _App.init(app, express);
-                            });
-                        } else {
-                            if (global.settings.config) app.config = global.settings.config;
-                            if (global.settings.db) app.db = global.settings.db;
-                            if (global.settings.auth) app.auth = global.settings.auth;
-                            _App.init(app, express);
-                        }*/
+
 
         };
     };
