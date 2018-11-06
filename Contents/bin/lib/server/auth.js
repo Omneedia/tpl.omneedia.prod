@@ -135,7 +135,7 @@ module.exports = function (app) {
         res.end('{"response":"NOT_LOGIN"}');
     };
 
-    app.get('/account', ensureAuthenticated, function (req, res) {
+    /*app.get('/account', ensureAuthenticated, function (req, res) {
         if (!req.user) req.user = req.session.user;
         var response = [];
         fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
@@ -148,15 +148,21 @@ module.exports = function (app) {
             req.user.profiles = response;
             res.end(JSON.stringify(req.user));
         });
-    });
+    });*/
 
     app.post('/account', ensureAuthenticated, function (req, res) {
 
         if (!req.user) req.user = req.session.user;
         var response = [];
-        fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-            if (e) return res.end(JSON.stringify(req.user));
-            var profiler = JSON.parse(r.toString('utf-8'));
+        global.request({
+            uri: global.Config.host + '/api/profile/all',
+            method: "POST",
+            form: {
+                task: global.Config.task
+            }
+        }, function (e, r, b) {
+            if (e) return cb(e);
+            var profiler = JSON.parse(b);
             for (var el in profiler.profile) {
                 var p = profiler.profile[el];
                 if (p.indexOf(req.user.mail.split('@')[0]) > -1) response.push(el);
