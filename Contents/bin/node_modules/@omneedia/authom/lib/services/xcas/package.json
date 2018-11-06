@@ -1,0 +1,50 @@
+{
+  "_from": "xcas@0.1.0",
+  "_id": "xcas@0.1.0",
+  "_inBundle": false,
+  "_integrity": "sha1-Lqj2YXd8fc7an01IDwnAIyKSA54=",
+  "_location": "/xcas",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "xcas@0.1.0",
+    "name": "xcas",
+    "escapedName": "xcas",
+    "rawSpec": "0.1.0",
+    "saveSpec": null,
+    "fetchSpec": "0.1.0"
+  },
+  "_requiredBy": [
+    "/@omneedia/authom"
+  ],
+  "_resolved": "https://registry.npmjs.org/xcas/-/xcas-0.1.0.tgz",
+  "_shasum": "2ea8f661777c7dceda9f4d480f09c0232292039e",
+  "_spec": "xcas@0.1.0",
+  "_where": "/Users/zucatti/omneedia.app/Contents/MacOS/bin/node_modules/@omneedia/authom",
+  "author": {
+    "name": "Xiong Yuanwei",
+    "email": "shallweel@gmail.com"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "xml2js": "*"
+  },
+  "deprecated": false,
+  "description": "Extended Central Authentication Service (CAS) client for Node.js",
+  "engines": {
+    "node": "0.4 || 0.5 || 0.6"
+  },
+  "main": "index",
+  "name": "xcas",
+  "version": "0.1.0",
+  "warnings": [
+    {
+      "code": "ENOTSUP",
+      "required": {
+        "node": "0.4 || 0.5 || 0.6"
+      },
+      "pkgid": "xcas@0.1.0"
+    }
+  ]
+}
