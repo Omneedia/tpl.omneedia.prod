@@ -36,6 +36,9 @@ module.exports = function (app, express, Config) {
 
             x = require(__dirname + '/global.js')(x);
 
+            // Sockets API
+            x.io = app.io;
+
             var myfn = parser.parse(x[api.method]);
             var response = {};
             response.params = myfn.args;
