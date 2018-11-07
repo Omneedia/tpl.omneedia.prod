@@ -64,7 +64,7 @@ module.exports = function (NET, cluster, Config) {
     var numCPUs = require('os').cpus().length;
     var net = require('net');
 
-    var numCPUs = 1;
+    //var numCPUs = 1;
 
     if (port == "auto") {
         var fp = require("find-free-port")
