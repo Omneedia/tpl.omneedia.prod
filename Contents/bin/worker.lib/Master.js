@@ -1,6 +1,7 @@
 module.exports = function (NET, cluster, Config) {
 
     var port = process.env.port;
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
     function init() {
 
