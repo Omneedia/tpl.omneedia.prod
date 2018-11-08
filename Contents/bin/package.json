@@ -56,7 +56,10 @@
     "exif": "",
     "md5-file": "",
     "yauzl": "",
-    "nmea": ""
+    "nmea": "",
+    "mailgun-js": "",
+    "nodemailer": "",
+    "nodemailer-smtp-transport": ""
   },
   "devDependencies": {},
   "scripts": {
