@@ -9,7 +9,7 @@
     "@omneedia/gridfs-storage-engine": "^0.2.3",
     "@omneedia/parse-function": "^5.0.23",
     "@omneedia/socket.io-adapter-mongo": "^2.0.0",
-    "@omneedia/authom": "1.1.4",
+    "@omneedia/authom": "1.1.6",
     "@omneedia/mailer": "1.1.3",
     "@omneedia/scraper": "",
     "nodemailer": "4.6.7",
