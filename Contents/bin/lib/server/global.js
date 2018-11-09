@@ -34,7 +34,7 @@ module.exports = function (_App) {
         "zlib"
     ];
     _App.file = {
-        writer: function (ff, cbo) {
+        writer: function (ff, cb) {
             var me = this;
             var set, db, tb;
             var results = [];
