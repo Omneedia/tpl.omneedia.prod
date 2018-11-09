@@ -35,53 +35,66 @@ module.exports = function (_App) {
     ];
     _App.file = {
         writer: function (ff, cbo) {
+            var me = this;
             var set, db, tb;
             var results = [];
-
-            function upload_blob(list, ndx, cb) {
-                if (!list[ndx]) {
-                    cb();
-                    return;
-                };
-                _App.using('db').query(db, 'select docId from ' + tb + ' where docId="' + list[ndx].docId + '"', function (err, result) {
-                    if (result.length > 0) {
-                        // already uploaded
-                        results.push({
-                            docId: list[ndx].docId,
-                            status: "ALREADY_UPLOADED"
-                        });
-                        upload_blob(list, ndx + 1, cb);
-                    } else {
-                        _App.file.reader(list[ndx].docId, function (err, up) {
-                            console.log(err);
-                            up.docId = list[ndx].docId;
-                            up.filename = list[ndx].filename;
-                            _App.using('db').post(db, tb, up, function (err, x) {
-                                console.log(err);
-                                console.log(x);
-                                if (err) results.push({
-                                    docId: list[ndx].docId,
-                                    status: "ERR",
-                                    results: err
-                                });
-                                else results.push({
-                                    docId: list[ndx].docId,
-                                    status: "OK",
-                                    results: x
-                                })
-                                upload_blob(list, ndx + 1, cb);
-                            });
-                        });
-                    }
-                });
+            if (cb.end) {
+                // via system
+                if (!ff) return cb.status(400).end("METHOD_NOT_ALLOWED");
+                if (!global.settings['docs']) return cb.status(400).end("DOCS_SETTINGS_REQUIRED");
+            } else {
+                // via api
+                if (!ff) return cb("METHOD_NOT_ALLOWED");
+                if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED");
             };
-            if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
+
             if (!Array.isArray(ff)) ff = [ff];
             set = global.settings['docs'][0];
             db = set.split('://')[0];
             tb = set.split('://')[1];
+
+            function upload_blob(list, ndx, cb) {
+                if (!list[ndx]) return cb(results);
+                // check if file is already uploaded
+                _App.using('db').query(db, 'select docId from ' + tb + ' where docId="' + list[ndx].docId + '"', function (err, rrr) {
+                    if (err) {
+                        results.push("DOCS_ENGINE_NOT_FOUND");
+                        return upload_blob(list, ndx + 1, cb);
+                    };
+                    if (rrr.length > 0) {
+                        results.push("ALREADY_UPLOADED");
+                        return upload_blob(list, ndx + 1, cb);
+                    };
+                    me.reader(list[ndx].docId, function (err, up) {
+                        if (err) {
+                            results.push({
+                                docId: list[ndx].docId,
+                                status: "ERR",
+                                results: err
+                            });
+                            return upload_blob(list, ndx + 1, cb);
+                        };
+                        up.docId = list[ndx].docId;
+                        _App.using('db').post(db, tb, up, function (err, x) {
+                            if (err) results.push({
+                                docId: list[ndx].docId,
+                                status: "ERR",
+                                results: err
+                            });
+                            else results.push({
+                                docId: list[ndx].docId,
+                                status: "OK",
+                                results: up
+                            })
+                            upload_blob(list, ndx + 1, cb);
+                        });
+                    });
+                });
+
+            }
+
             upload_blob(ff, 0, function () {
-                cbo(results);
+                cb(results);
             });
         },
         reader: function (ff, cb) {
