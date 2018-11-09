@@ -19,7 +19,8 @@ module.exports = function (app, express, Config) {
                 file: req.files[0]
             };
             o.id = req.files[0].filename;
-            if (!cb) return res.end(JSON.stringify(o.id));
+            //if (!cb) return res.end(JSON.stringify(o.id));
+            if (!cb) return res.end(JSON.stringify(req.files));
             return cb(req, res, null, o);
         });
     }

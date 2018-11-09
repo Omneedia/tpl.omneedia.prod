@@ -97,8 +97,12 @@ module.exports = function (_App) {
                 cb(results);
             });
         },
-        reader: function (ff, cb) {
+        reader: function (ff, options, cb) {
             var fs = require('fs');
+            if (!cb) {
+                cb = options;
+                options = {};
+            };
             // If it's a string, the file is in the upload queue
             // If it's an object, the file is in the cloud
             if (cb.end) {
@@ -250,85 +254,8 @@ module.exports = function (_App) {
     };
 
     _App.getData = function () {
-        var fs = require('fs');
-        var OS = require('os');
-        var path = require('path');
-        var sep = "/";
-        var fs = require('fs');
-        var userdir = OS.homedir() + sep + "omneedia" + sep + "app";
-        var userdirdata = userdir + sep + Manifest.uid;
-        var data = userdirdata + sep + "store";
-
-        function init(cb) {
-            fs.mkdir(userdir, function () {
-                fs.mkdir(userdirdata, function () {
-                    fs.mkdir(data, cb);
-                });
-            });
-        };
-        return {
-            mkdir: function (d, cb) {
-                init(function () {
-                    var dir = data + sep + d;
-                    util.mkdir(dir, cb);
-                });
-            },
-            cp: function (from, to, cb) {
-                init(function () {
-                    var filename;
-                    if (from.originalname) filename = from.originalname;
-                    else filename = path.basename(from);
-                    if (to.indexOf(filename) == -1)
-                        to = data + sep + to + sep + filename;
-                    else to = data + sep + to;
-                    var dir = require('path').dirname(to);
-                    util.mkdir(dir, function () {
-                        if (from.originalname) fs.copyFile(from.path, to, function (e, r) {
-                            if (e) return cb(e, null);
-                            cb(null, to);
-                        });
-                        else fs.copyFile(from, to, function (e, r) {
-                            if (e) return cb(e, null);
-                            cb(null, to);
-                        });
-                    })
-                });
-            },
-            unlink: function (filename, cb) {
-                init(function () {
-                    fs.stat(filename, function (e, r) {
-                        if (e) {
-                            var name = data + sep + filename;
-                            fs.unlink(name, cb);
-                        } else fs.unlink(filename, cb);
-                    });
-                });
-            },
-            mv: function (from, to, cb) {
-                init(function () {
-                    var filename;
-                    if (from.originalname) filename = from.originalname;
-                    else filename = path.basename(from);
-                    if (to.indexOf(filename) == -1)
-                        to = data + sep + to + sep + filename;
-                    else to = data + sep + to;
-                    var dir = require('path').dirname(to);
-                    util.mkdir(dir, function () {
-                        if (from.originalname) fs.rename(from.path, to, function (e, r) {
-                            if (e) return cb(e, null);
-                            cb(null, to);
-                        });
-                        else fs.rename(from, to, function (e, r) {
-                            if (e) return cb(e, null);
-                            cb(null, to);
-                        });
-                    })
-                });
-            }
-        }
+        return '/data';
     };
-
-    //_App.io = require('socket.io-client')('http://127.0.0.1:' + global.manifest.server.port);
 
     _App.cors = require('cors');
 
@@ -407,9 +334,6 @@ module.exports = function (_App) {
                     return self._model;
                 }
             };
-            // deprecated
-            //_App[Manifest.api[i]].DB = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "db" +sep + "DB.js");
-            //_App[Manifest.api[i]].DB = require(global.ROOT + sep + 'node_modules' + sep + "@omneedia" + sep + "db" + sep + "lib" + sep + "index.js");
             _App[Manifest.api[i]].IO = {
                 send: function (uri, data, users) {
                     var o = {
