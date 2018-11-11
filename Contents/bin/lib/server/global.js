@@ -76,6 +76,7 @@ module.exports = function (_App) {
                             return upload_blob(list, ndx + 1, cb);
                         };
                         up.docId = list[ndx].docId;
+                        up.filename = list[ndx].filename;
                         _App.using('db').post(db, tb, up, function (err, x) {
                             if (err) results.push({
                                 docId: list[ndx].docId,
