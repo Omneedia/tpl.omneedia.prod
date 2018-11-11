@@ -98,11 +98,13 @@ module.exports = function (_App) {
                 cb(results);
             });
         },
-        reader: function (ff, cb) {
+        reader: function (ff, options, cb) {
             var isUpload = false;
             if (!cb) {
                 cb = options;
-                options = {};
+                options = {
+                    output: "json"
+                };
             };
             if (!cb) return false;
 
@@ -121,43 +123,46 @@ module.exports = function (_App) {
                 if (ff.encoding) isUpload = true;
                 else isUpload = false;
             };
-            if (!isUpload) {
-                if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
-                var set = global.settings['docs'][0];
-                var db = set.split('://')[0];
-                var tb = set.split('://')[1];
-                _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
-                    if (cb.end) {
-                        if (r.length == 0) return cb.status(404).end('NOT_FOUND');
-                        cb.set('Content-disposition', 'inline; filename="' + r[0].filename + '"');
-                        cb.set("Content-Type", r[0].type);
-                        cb.set("Content-Length", r[0].size);
-                        var buf = new Buffer(r[0]._blob.split(';base64,')[1], 'base64');
-                        return cb.end(buf);
+            var mongoose = require('mongoose');
+            var Grid = require('gridfs-stream');
+            Grid.mongo = mongoose.mongo;
+            var conn = mongoose.createConnection(Config.session + 'upload');
+
+            conn.once('open', function () {
+                var gfs = Grid(conn.db);
+                gfs.files.find({
+                    filename: ff.docId
+                }).toArray(function (err, files) {
+                    console.log(files);
+                    if (err) return err('NOT_FOUND', 404);
+                    if (files.length == 0) {
+                        if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
+                        var set = global.settings['docs'][0];
+                        var db = set.split('://')[0];
+                        var tb = set.split('://')[1];
+                        _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
+                            if (cb.end) {
+                                if (r.length == 0) return cb.status(404).end('NOT_FOUND');
+                                cb.set('Content-disposition', 'inline; filename="' + r[0].filename + '"');
+                                cb.set("Content-Type", r[0].type);
+                                cb.set("Content-Length", r[0].size);
+                                var buf = new Buffer(r[0]._blob.split(';base64,')[1], 'base64');
+                                return cb.end(buf);
+                            } else {
+                                if (r.length == 0) return cb('NOT_FOUND');
+                                r[0].docId = ff.docId;
+                                if (options.output == "buffer") {
+                                    r[0].buffer = new Buffer(r[0]._blob, 'base64');
+                                    delete r[0]._blob;
+                                };
+                                cb(null, r[0]);
+                            }
+                        });
                     } else {
-                        if (r.length == 0) return cb('NOT_FOUND');
-                        r[0].docId = ff.docId;
-                        if (options.output == "buffer") {
-                            r[0].buffer = new Buffer(r[0]._blob, 'base64');
-                            delete r[0]._blob;
-                        };
-                        cb(null, r[0]);
-                    }
-                });
-            } else {
-                var mongoose = require('mongoose');
-                var Grid = require('gridfs-stream');
-                Grid.mongo = mongoose.mongo;
-                var conn = mongoose.createConnection(Config.session + 'upload');
-                conn.once('open', function () {
-                    var gfs = Grid(conn.db);
-                    gfs.files.find({
-                        _id: ff.docId
-                    }).toArray(function (err, files) {
                         if (err) return err('NOT_FOUND', 404);
                         if (files.length > 0) {
                             var readstream = gfs.createReadStream({
-                                _id: ff.docId
+                                filename: ff.docId
                             });
                             readstream.on('error', function (err) {
                                 return cb('NOT_FOUND', null);
@@ -199,9 +204,10 @@ module.exports = function (_App) {
                                 }
                             });
                         } else return err('NOT_FOUND', 404);
-                    });
-                });
-            }
+                    }
+                })
+            });
+
         }
     }
 
