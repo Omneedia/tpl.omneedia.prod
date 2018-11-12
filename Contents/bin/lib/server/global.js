@@ -120,9 +120,8 @@ module.exports = function (_App) {
                     docId: ff
                 }
             } else {
-                if (!ff.docId) ff.docId = ff.id;
+                if (!ff.docId) ff.docId = ff.filename;
                 if (ff.encoding) isUpload = true;
-                else isUpload = false;
             };
             var mongoose = require('mongoose');
             var Grid = require('gridfs-stream');
