@@ -35,6 +35,43 @@ module.exports = function (_App) {
     ];
 
     _App.file = {
+        copy: function (ff, dest, cb, ndx, err) {
+            var me = this;
+            if (Array.isArray(ff)) {
+                if (!ndx) return this.copy(ff, dest, cb, -1, []);
+                if (ndx == -1) ndx = 0;
+                if (!ff[ndx]) return cb(err);
+                var filename = ff[ndx];
+            } else var filename = ff;
+            this.reader(filename, {
+                output: "buffer"
+            }, function (e, o) {
+                if (e) {
+                    if (err) {
+                        err.push(e);
+                        return me.copy(ff, dest, cb, ndx + 1, err);
+                    }
+                    return cb(e);
+                };
+                dest = _App.getData() + '/' + dest + '/';
+                dest = dest.replace(/\/\//g, "/");
+                util.mkdir(dest, function () {
+                    if (o) App.using('fs').writeFile(dest + o.originalname, o.buffer, function (e) {
+                        console.log(dest + o.originalname);
+                        if (e) {
+                            if (err) {
+                                err.push(e);
+                                return me.copy(ff, dest, cb, ndx + 1, err);
+                            }
+                            return cb(e);
+                        } else {
+                            if (err) return me.copy(ff, dest, cb, ndx + 1, err);
+                            else return cb([]);
+                        }
+                    });
+                });
+            });
+        },
         writer: function (ff, cb) {
             var me = this;
             var set, db, tb;
