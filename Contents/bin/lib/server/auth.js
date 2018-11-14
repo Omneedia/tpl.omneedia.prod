@@ -7,41 +7,45 @@ module.exports = function (app) {
 
     var util = require('../util');
 
-    // officer
-    global.officer = {
-        getProfile: function (user, cb) {
-            var response = [];
-            if (cb) {
-                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                    var profiler = JSON.parse(r.toString('utf-8'));
-                    for (var el in profiler.profile) {
-                        var p = profiler.profile[el];
-                        if (p.indexOf(user) > -1) response.push(el);
-                    };
-                    cb(response);
-                })
-            }
+    // published Officer
+    var fs = require('fs');
+    global.officer = require(global.PROJECT_AUTH + sep + "Officer.js");
+    global.officer = global.officer.published;
+    global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
+    // Profiles
+    global.officer.profiles = {
+        getAll: function (cb) {
+            var fs = require('fs');
+            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                var profiler = JSON.parse(r.toString('utf-8'));
+                cb(null, profiler);
+            })
         },
-        profiles: {
-            getAll: function (cb) {
-                var fs = require('fs');
-                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                    var profiler = JSON.parse(r.toString('utf-8'));
-                    cb(null, profiler);
-                })
-            },
-            get: function (o, cb) {
-                if (!o) cb("NO_PROFILE_ID");
-                var fs = require('fs');
-                fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                    var profiler = JSON.parse(r.toString('utf-8'));
-                    if (profiler.profiles.indexOf(o) == -1) return cb("PROFILE_NOT_FOUND");
-                    cb(null, profiler.profile[o]);
-                })
-            }
+        get: function (o, cb) {
+            if (!o) cb("NO_PROFILE_ID");
+            var fs = require('fs');
+            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                var profiler = JSON.parse(r.toString('utf-8'));
+                if (profiler.profiles.indexOf(o) == -1) return cb("PROFILE_NOT_FOUND");
+                cb(null, profiler.profile[o]);
+            })
         }
     };
-    global.officer = require(__dirname + '/global.js')(global.officer);
+    global.officer.getProfile = function (user, cb) {
+        var response = [];
+        var fs = require('fs');
+        if (cb) {
+            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
+                var profiler = JSON.parse(r.toString('utf-8'));
+                for (var el in profiler.profile) {
+                    var p = profiler.profile[el];
+                    if (p.indexOf(user) > -1) response.push(el);
+                };
+                cb(response);
+            })
+        }
+    };
+    global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
 
     global.Auth = {
         officer: function (req, profile, fn) {
@@ -55,32 +59,48 @@ module.exports = function (app) {
             var off = "Officer";
             var fs = require('fs');
             var Officer = require(global.PROJECT_AUTH + sep + off + ".js");
-            var request = require('request');
-            if (process.env['proxy']) {
-                Officer.request = request.defaults({
-                    proxy: process.env['proxy'],
-                    encoding: null
-                })
-            } else Officer.request = request.defaults({
-                encoding: null
-            });
-            Officer = require(__dirname + '/global.js')(Officer);
-            /*
-            Officer.using = function (unit) {
-                //built in classes
-                if (unit == "db") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'db' + sep + 'lib' + sep + 'index.js');
-                if (unit == "mailer") return require(global.ROOT + sep + 'node_modules' + sep + '@omneedia' + sep + 'mailer' + sep + 'lib' + sep + 'index.js');
-                try {
-                    return require(global.ROOT + sep + 'node_modules' + sep + unit);
-                } catch (e) {
-                    return require(global.PROJECT_BIN + sep + 'node_modules' + sep + unit);
-                };
+            Officer = Object.assign(Officer, require(__dirname + '/global.js')());
+
+            // Profiles
+            Officer.profiles = {
+                getAll: function (cb) {
+                    global.request({
+                        uri: global.Config.host + '/api/profile/all',
+                        method: "POST",
+                        form: {
+                            task: global.Config.task
+                        }
+                    }, function (e, r, b) {
+                        if (e) return cb(e);
+                        try {
+                            cb(null, JSON.parse(b));
+                        } catch (e) {
+                            cb("JSON_PARSE_ERROR");
+                        }
+                    });
+                },
+                get: function (o, cb) {
+                    if (!o) cb("NO_PROFILE_ID");
+                    global.request({
+                        uri: global.Config.host + '/api/profile/1',
+                        method: "POST",
+                        form: {
+                            profile: o,
+                            task: global.Config.task
+                        }
+                    }, function (e, r, b) {
+                        if (e) return cb(e);
+                        try {
+                            cb(null, JSON.parse(b));
+                        } catch (e) {
+                            cb("JSON_PARSE_ERROR");
+                        }
+                    });
+                }
             };
-            */
+
             Officer.getProfile = function (user, cb) {
                 var response = [];
-                // DEPRECATED
-                if (!cb) return response;
 
                 global.request({
                     uri: global.Config.host + '/api/profile',
