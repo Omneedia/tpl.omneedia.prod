@@ -15,35 +15,52 @@ module.exports = function (app) {
     // Profiles
     global.officer.profiles = {
         getAll: function (cb) {
-            var fs = require('fs');
-            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                var profiler = JSON.parse(r.toString('utf-8'));
-                cb(null, profiler);
-            })
+            global.request({
+                uri: global.Config.host + '/api/profile/all',
+                method: "POST",
+                form: {
+                    task: global.Config.task
+                }
+            }, function (e, r, b) {
+                if (e) return cb(e);
+                try {
+                    cb(null, JSON.parse(b));
+                } catch (e) {
+                    cb("JSON_PARSE_ERROR");
+                }
+            });
         },
         get: function (o, cb) {
             if (!o) cb("NO_PROFILE_ID");
-            var fs = require('fs');
-            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                var profiler = JSON.parse(r.toString('utf-8'));
-                if (profiler.profiles.indexOf(o) == -1) return cb("PROFILE_NOT_FOUND");
-                cb(null, profiler.profile[o]);
-            })
+            global.request({
+                uri: global.Config.host + '/api/profile/1',
+                method: "POST",
+                form: {
+                    profile: o,
+                    task: global.Config.task
+                }
+            }, function (e, r, b) {
+                if (e) return cb(e);
+                try {
+                    cb(null, JSON.parse(b));
+                } catch (e) {
+                    cb("JSON_PARSE_ERROR");
+                }
+            });
         }
     };
     global.officer.getProfile = function (user, cb) {
-        var response = [];
-        var fs = require('fs');
-        if (cb) {
-            fs.readFile(global.PROJECT_AUTH + sep + 'Profiler.json', function (e, r) {
-                var profiler = JSON.parse(r.toString('utf-8'));
-                for (var el in profiler.profile) {
-                    var p = profiler.profile[el];
-                    if (p.indexOf(user) > -1) response.push(el);
-                };
-                cb(response);
-            })
-        }
+
+        global.request({
+            uri: global.Config.host + '/api/profile',
+            method: "POST",
+            form: {
+                user: user,
+                task: global.Config.task
+            }
+        }, function (e, r, b) {
+            cb(JSON.parse(b));
+        });
     };
     global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
 
