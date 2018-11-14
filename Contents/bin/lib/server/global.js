@@ -1,4 +1,6 @@
-module.exports = function (_App) {
+module.exports = function () {
+    var _App = this;
+
     var path = require('path');
     var sep = "/";
     var util = require('../util');

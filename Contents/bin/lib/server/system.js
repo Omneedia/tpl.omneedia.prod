@@ -8,7 +8,7 @@ module.exports = function (app, express, Config) {
     //app.use(express.static(OS.tmpdir() + sep + 'tempfiles'));
 
     var _App = require(global.PROJECT_SYSTEM + sep + "app.js");
-    _App = require(__dirname + '/global.js')(_App);
+    _App = Object.assign(_App, require(__dirname + '/global.js')());
 
     app.upload = function (root, cb) {
         app.post(root, app.UPLOAD.any(), function (req, res, next) {

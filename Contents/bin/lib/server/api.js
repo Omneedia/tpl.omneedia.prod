@@ -34,7 +34,7 @@ module.exports = function (app, express, Config) {
             x.auth = req.session.user;
             x.session = req.session;
 
-            x = require(__dirname + '/global.js')(x);
+            x = Object.assign(x, require(__dirname + '/global.js')());
 
             // Sockets API
             x.io = app.io;

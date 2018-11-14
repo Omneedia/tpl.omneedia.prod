@@ -20,7 +20,7 @@ module.exports = function (NET, cluster, Config) {
         var job = process.env.job;
         if (!job) return false;
         var _App = require(global.PROJECT_SYSTEM + '/../jobs/' + job);
-        _App = require(__dirname + '/global.js')(_App);
+        _App = Object.assign(_App, require(__dirname + '/global.js')());
 
         _App.util = require('../util');
 
