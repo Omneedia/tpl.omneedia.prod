@@ -10,60 +10,63 @@ module.exports = function (app) {
     // published Officer
     var fs = require('fs');
     global.officer = require(global.PROJECT_AUTH + sep + "Officer.js");
-    global.officer = global.officer.published;
-    global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
-    // Profiles
-    global.officer.profiles = {
-        getAll: function (cb) {
-            global.request({
-                uri: global.Config.host + '/api/profile/all',
-                method: "POST",
-                form: {
-                    task: global.Config.task
-                }
-            }, function (e, r, b) {
-                if (e) return cb(e);
-                try {
-                    cb(null, JSON.parse(b));
-                } catch (e) {
-                    cb("JSON_PARSE_ERROR");
-                }
-            });
-        },
-        get: function (o, cb) {
-            if (!o) cb("NO_PROFILE_ID");
-            global.request({
-                uri: global.Config.host + '/api/profile/1',
-                method: "POST",
-                form: {
-                    profile: o,
-                    task: global.Config.task
-                }
-            }, function (e, r, b) {
-                if (e) return cb(e);
-                try {
-                    cb(null, JSON.parse(b));
-                } catch (e) {
-                    cb("JSON_PARSE_ERROR");
-                }
-            });
-        }
-    };
-    global.officer.getProfile = function (user, cb) {
-
-        global.request({
-            uri: global.Config.host + '/api/profile',
-            method: "POST",
-            form: {
-                user: user,
-                task: global.Config.task
+    try {
+        global.officer = global.officer.published;
+        global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
+        // Profiles
+        global.officer.profiles = {
+            getAll: function (cb) {
+                global.request({
+                    uri: global.Config.host + '/api/profile/all',
+                    method: "POST",
+                    form: {
+                        task: global.Config.task
+                    }
+                }, function (e, r, b) {
+                    if (e) return cb(e);
+                    try {
+                        cb(null, JSON.parse(b));
+                    } catch (e) {
+                        cb("JSON_PARSE_ERROR");
+                    }
+                });
+            },
+            get: function (o, cb) {
+                if (!o) cb("NO_PROFILE_ID");
+                global.request({
+                    uri: global.Config.host + '/api/profile/1',
+                    method: "POST",
+                    form: {
+                        profile: o,
+                        task: global.Config.task
+                    }
+                }, function (e, r, b) {
+                    if (e) return cb(e);
+                    try {
+                        cb(null, JSON.parse(b));
+                    } catch (e) {
+                        cb("JSON_PARSE_ERROR");
+                    }
+                });
             }
-        }, function (e, r, b) {
-            cb(JSON.parse(b));
-        });
-    };
-    global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
+        };
+        global.officer.getProfile = function (user, cb) {
 
+            global.request({
+                uri: global.Config.host + '/api/profile',
+                method: "POST",
+                form: {
+                    user: user,
+                    task: global.Config.task
+                }
+            }, function (e, r, b) {
+                cb(JSON.parse(b));
+            });
+        };
+        global.officer = Object.assign(global.officer, require(__dirname + '/global.js')());
+    } catch (e) {
+
+    };
     global.Auth = {
         officer: function (req, profile, fn) {
             this.register(req, profile, function (err, response) {
