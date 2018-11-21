@@ -11,6 +11,6 @@ module.exports = function () {
     global.PROJECT_AUTH = PROJECT_HOME + sep + "auth";
     global.PROJECT_API = PROJECT_HOME + sep + "api";
     global.PROJECT_SYSTEM = PROJECT_HOME + sep + "var";
-
+    global.PROJECT_PROCESSES = PROJECT_HOME + sep + "processes";
 
 }();

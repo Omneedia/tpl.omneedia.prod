@@ -1,5 +1,8 @@
 module.exports = function (NET, cluster, Config) {
 
+    var events = require('events');
+    global.eventEmitter = new events.EventEmitter();
+
     Math = require(__dirname + '/../lib/framework/math')();
     Date = require(__dirname + '/../lib/framework/dates')();
     Object = require(__dirname + '/../lib/framework/objects')();
@@ -99,8 +102,78 @@ module.exports = function (NET, cluster, Config) {
 
         io.adapter(mongo(Config.session + 'io'));
 
-        var IO = require('./io');
-        io.on('connection', IO);
+        // Queue processing
+        try {
+            global.queue = require(global.PROJECT_SYSTEM + '/queue');
+            global.queue = Object.assign(global.queue, require(__dirname + '/../lib/server/global.js'));
+        } catch (e) {
+            console.log(e);
+        };
+
+        global.processes = {
+            add: function (job, params) {
+                var qid = require('shortid').generate();
+                this.all.push(qid);
+                this.pid[qid] = {
+                    job: job,
+                    params: params
+                };
+                var p = {
+                    qid: qid,
+                    job: job,
+                    params: params
+                };
+                this.all.push(p);
+                global.eventEmitter.emit('__queue__', p);
+                return qid;
+            },
+            remove: function (job) {
+
+            },
+            all: [],
+            pid: {},
+            on: function (id) {
+
+            },
+            process: {}
+        };
+
+        global.eventEmitter.on('__queue__', function (o) {
+            var child_process = require('child_process');
+            child_process.fork('lib/fn', [], {
+                env: {
+                    sid: o.qid,
+                    p: JSON.stringify(o.params),
+                    q: o.job
+                }
+            });
+        });
+
+        io.on('connection', function (socket) {
+
+            global.OASocketonAuth = function (response) {
+                var r = JSON.parse(response);
+                socket.emit("#auth", response);
+            };
+
+            global.OASocketonFailedAuth = function (response) {
+                socket.emit("#failedauth", response);
+            };
+
+            // processing queue
+            socket.on('__queue__', function (obj) {
+                var p = JSON.parse(JSON.stringify(obj));
+                delete p.class;
+                delete p.fn;
+                var fn = {
+                    emit: function (msg) {
+                        app.io.emit(p.id, msg);
+                    }
+                };
+                global.queue[obj.class][obj.fn](p, fn);
+            });
+
+        });
 
         // Session
         var Session = require('express-session');

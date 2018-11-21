@@ -284,12 +284,6 @@ module.exports = function () {
         }
     };
 
-    _App.queue = {
-        add: function (task, params) {
-
-        }
-    };
-
     _App.getData = function () {
         return '/data';
     };
