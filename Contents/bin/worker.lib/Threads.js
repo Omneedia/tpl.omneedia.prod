@@ -42,6 +42,7 @@ module.exports = function (NET, cluster, Config) {
 
         // LOGGER
         var morgan = require('mongo-morgan');
+        console.log(Config.session);
         app.use(morgan(Config.session + 'logs', 'combined', {
             collection: "logs"
         }));
@@ -144,7 +145,9 @@ module.exports = function (NET, cluster, Config) {
                 env: {
                     sid: o.qid,
                     p: JSON.stringify(o.params),
-                    q: o.job
+                    q: o.job,
+                    host: NET.getIPAddress(),
+                    port: process.env.port
                 }
             });
         });

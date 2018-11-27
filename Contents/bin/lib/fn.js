@@ -22,7 +22,8 @@ module.exports = function () {
         var q = process.env['q'];
         var p = process.env['p'];
 
-        var socket = require('socket.io-client')('http://127.0.0.1:' + global.manifest.server.port);
+        var socket = require('socket.io-client')('http://' + process.env.host + ':' + process.env.port);
+
         socket.on('connect', function (s) {
 
             if (global.manifest.processes.indexOf(q.split('.')[0]) == -1) {
