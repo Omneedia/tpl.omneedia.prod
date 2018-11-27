@@ -42,7 +42,6 @@ module.exports = function (NET, cluster, Config) {
 
         // LOGGER
         var morgan = require('mongo-morgan');
-        console.log(Config.session);
         app.use(morgan(Config.session + 'logs', 'combined', {
             collection: "logs"
         }));
@@ -279,9 +278,9 @@ module.exports = function (NET, cluster, Config) {
     // register worker with manager
     console.log('\t- Contacting manager');
 
-    global.request(Config.host + 'io.uri', function (e, r, io_host) {
+    global.request(Config.host + '/io.uri', function (e, r, io_host) {
 
-        global.request(Config.host + 'session.uri', function (e, r, Config_session) {
+        global.request(Config.host + '/session.uri', function (e, r, Config_session) {
             /*io_host = process.env.io;
             Config_session = process.env.session;*/
 
