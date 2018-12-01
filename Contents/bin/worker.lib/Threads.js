@@ -1,6 +1,7 @@
-module.exports = function (NET, cluster, Config) {
+module.exports = function (NET, cluster, Config, Settings) {
 
     var events = require('events');
+    global.settings = Settings;
     global.eventEmitter = new events.EventEmitter();
 
     Math = require(__dirname + '/../lib/framework/math')();
@@ -42,6 +43,7 @@ module.exports = function (NET, cluster, Config) {
 
         // LOGGER
         var morgan = require('mongo-morgan');
+
         app.use(morgan(Config.session + 'logs', 'combined', {
             collection: "logs"
         }));
@@ -263,7 +265,7 @@ module.exports = function (NET, cluster, Config) {
         setTimeout(function () {
             global.STARTED = true;
         }, 5000);
-        console.log('\t[ OK ] thread #' + require('cluster').worker.id);
+        //console.log('\t[ OK ] thread #' + require('cluster').worker.id);
 
     };
 
@@ -275,47 +277,31 @@ module.exports = function (NET, cluster, Config) {
         } else next();
     });
 
-    // register worker with manager
-    console.log('\t- Contacting manager');
+    var io_host = Config.host;
 
-    global.request(Config.host + '/io.uri', function (e, r, io_host) {
-
-        global.request(Config.host + '/session.uri', function (e, r, Config_session) {
-            /*io_host = process.env.io;
-            Config_session = process.env.session;*/
-
-            if (!process.env.proxy) io_host = Config.host;
-
-            global.socket = ioclient(io_host, {
-                query: "engine=app&iokey=" + setToken() + '&task=' + Config.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
-                reconnection: true,
-                reconnectionDelay: 1000
-            });
-
-            global.socket.on('disconnect', function (x) {
-                console.log("\t! manager lost...");
-            });
-
-            global.socket.on('connect', function () {
-                console.log('\t* waiting for manager to send settings...');
-            });
-
-            global.socket.on('#CONFIG', function (r) {
-                global.settings = r;
-                console.log('\t* launching instance');
-                Config.session = r.session;
-                global.settings = r.config;
-                if (process.env.proxy) Config.session = Config_session;
-                init_thread();
-            });
-        });
+    global.socket = ioclient(io_host, {
+        query: "engine=app&iokey=" + setToken() + '&task=' + Config.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
+        reconnection: true,
+        reconnectionDelay: 1000
     });
+
+    global.socket.on('disconnect', function (x) {
+        console.log("\t! manager lost...");
+    });
+
+    global.socket.on('connect', function () {
+        console.log('\t[ OK ] thread #' + require('cluster').worker.id);
+    });
+
+    if (process.env.proxy) Config.session = Config_session;
+
+    init_thread();
 
     process.on('message', function (message, connection) {
         if (message !== 'sticky-session:connection') {
             return;
         }
-
+        console.log(message);
         // Emulate a connection event on the server by emitting the
         // event with the connection the master sent us.
         server.emit('connection', connection);

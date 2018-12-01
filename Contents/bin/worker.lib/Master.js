@@ -3,6 +3,12 @@ module.exports = function (NET, cluster, Config) {
     var port = process.env.port;
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
+    Math = require(__dirname + '/../lib/framework/math')();
+    Date = require(__dirname + '/../lib/framework/dates')();
+    Object = require(__dirname + '/../lib/framework/objects')();
+    Array = require(__dirname + '/../lib/framework/arrays')();
+    String = require(__dirname + '/../lib/framework/strings')();
+
     function init() {
 
         console.log('\nOmneedia Worker started at ' + NET.getIPAddress() + ":" + port + " (" + numCPUs + " threads)");
@@ -37,7 +43,8 @@ module.exports = function (NET, cluster, Config) {
         var spawn = function (i) {
             workers[i] = cluster.fork();
             workers[i].send({
-                msgFromMaster: JSON.stringify(Config)
+                config: JSON.stringify(Config),
+                settings: JSON.stringify(global.settings)
             });
             workers[i].on('exit', function (worker, code, signal) {
                 console.log('\t! RESPAWING WORKER#', i);
@@ -45,19 +52,60 @@ module.exports = function (NET, cluster, Config) {
             });
         };
 
-        // Spawn workers.
-        for (var i = 0; i < numCPUs; i++) {
-            spawn(i);
-        };
+        // register worker with manager
+        console.log('\t- Contacting manager');
 
-        var server = net.createServer({
-            pauseOnConnect: true
-        }, function (connection) {
-            var worker = workers[worker_index(connection.remoteAddress, numCPUs)];
-            worker.send('sticky-session:connection', connection);
-        }).listen(port);
+        require('fs').readFile(__dirname + '/../../app.manifest', function (e, r) {
+            global.manifest = JSON.parse(r.toString('utf-8'));
+            global.request(Config.host + '/io.uri', function (e1, r, io_host) {
 
-        console.log('\t- Worker starting...');
+                global.request(Config.host + '/session.uri', function (e2, r, Config_session) {
+
+                    if (!process.env.proxy) io_host = Config.host;
+
+                    var ioclient = require('socket.io-client');
+
+                    global.socket = ioclient(io_host, {
+                        query: "engine=app&iokey=" + setToken() + '&task=' + Config.task + '&hid=' + Config.hid + '&port=' + port + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
+                        reconnection: true,
+                        reconnectionDelay: 1000
+                    });
+
+                    global.socket.on('disconnect', function (x) {
+                        console.log("\t! manager lost...");
+                    });
+
+                    global.socket.on('connect', function () {
+                        console.log('\t* waiting for manager to send settings...');
+                    });
+
+                    global.socket.on('#CONFIG', function (r) {
+                        global.settings = r;
+                        console.log('\t* launching instance');
+                        Config.session = r.session;
+                        global.settings = r.config;
+                        if (process.env.proxy) Config.session = Config_session;
+
+                        for (var i = 0; i < numCPUs; i++) {
+                            spawn(i);
+                        };
+
+                        var server = net.createServer({
+                            pauseOnConnect: true
+                        }, function (connection) {
+                            var worker = workers[worker_index(connection.remoteAddress, numCPUs)];
+                            worker.send('sticky-session:connection', connection);
+                        }).listen(port);
+
+                        console.log('\t- Worker starting...');
+                        //init_thread();
+                    });
+                });
+            });
+        });
+
+
+
 
     };
 

@@ -77,8 +77,9 @@ if (cluster.isMaster) {
 } else {
 
     process.on('message', function (data) {
-        if (data.msgFromMaster) {
-            var Config = JSON.parse(data.msgFromMaster);
+        if (data.config) {
+            var Config = JSON.parse(data.config);
+            var Settings = JSON.parse(data.settings);
             fs.readFile(__dirname + '/../app.manifest', function (e, r) {
                 if (e) {
                     console.log('[FAILED]   No manifest found');
@@ -86,7 +87,7 @@ if (cluster.isMaster) {
                 };
                 global.manifest = JSON.parse(r.toString('utf-8'));
                 require('./lib/globals.js');
-                startThreads(NET, cluster, Config);
+                startThreads(NET, cluster, Config, Settings);
             });
         }
     })
