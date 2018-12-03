@@ -81,6 +81,26 @@ module.exports = function (NET, cluster, Config) {
                         console.log('\t* waiting for manager to send settings...');
                     });
 
+                    global.socket.on('#job', function (s) {
+                        var job = s.job;
+                        var r = s.settings;
+                        const compute = fork('./lib/server/jobs.js', undefined, {
+                            env: process.env
+                        });
+                        if (!r.config.job) r.config.job = {};
+                        if (!r.config.job[job]) r.config.job[job] = {
+                            type: "loop",
+                            run: {
+                                every: 1
+                            }
+                        };
+                        compute.send({
+                            job: job,
+                            Config: Config,
+                            settings: r.config
+                        });
+                    });
+
                     global.socket.on('#CONFIG', function (r) {
 
                         console.log('\t* launching instance');
@@ -88,26 +108,12 @@ module.exports = function (NET, cluster, Config) {
                         global.settings = r.config;
                         if (process.env.proxy) Config.session = Config_session;
 
-                        if (r.job == 1) {
-                            for (var i = 0; i < global.manifest.jobs.length; i++) {
-                                var job = global.manifest.jobs[i];
-                                const compute = fork('./lib/server/jobs.js', undefined, {
-                                    env: process.env
-                                });
-                                if (!r.config.job) r.config.job = {};
-                                if (!r.config.job[job]) r.config.job[job] = {
-                                    type: "loop",
-                                    run: {
-                                        every: 1
-                                    }
-                                };
-                                compute.send({
-                                    job: job,
-                                    Config: Config,
-                                    settings: r.config
-                                });
-                            };
-
+                        if (global.manifest.jobs.length > 0) {
+                            console.log('\t* launching jobs');
+                            global.socket.emit('job', {
+                                task: Config.task,
+                                jobs: global.manifest.jobs
+                            });
                         };
 
                         for (var i = 0; i < numCPUs; i++) {
