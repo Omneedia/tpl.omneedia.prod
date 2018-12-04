@@ -83,26 +83,38 @@ module.exports = function (NET, cluster, Config) {
                         console.log('\t* waiting for manager to send settings...');
                     });
 
+
+
                     global.socket.on('#job', function (s) {
                         console.log('\t- master sent job to worker.');
 
                         var job = s.job;
                         var r = s.settings;
-                        const compute = fork('./lib/server/jobs.js', undefined, {
-                            env: process.env
-                        });
-                        if (!r.config.job) r.config.job = {};
-                        if (!r.config.job[job]) r.config.job[job] = {
-                            type: "loop",
-                            run: {
-                                every: 1
-                            }
+
+                        function forkJob(job) {
+                            const compute = fork('./lib/server/jobs.js', undefined, {
+                                env: process.env
+                            });
+                            compute.on('exit', function (worker, code, signal) {
+                                console.log('\t! RESPAWING JOB');
+                                forkJob(job);
+                            });
+                            if (!r.config.job) r.config.job = {};
+                            if (!r.config.job[job]) r.config.job[job] = {
+                                type: "loop",
+                                run: {
+                                    every: 1
+                                }
+                            };
+                            compute.send({
+                                job: job,
+                                Config: Config,
+                                settings: r.config
+                            });
                         };
-                        compute.send({
-                            job: job,
-                            Config: Config,
-                            settings: r.config
-                        });
+                        forkJob(job);
+
+
                     });
 
                     global.socket.on('#CONFIG', function (r) {
