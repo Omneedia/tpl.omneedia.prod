@@ -65,8 +65,6 @@ module.exports = function (NET, cluster, Config) {
 
                     if (!process.env.proxy) io_host = Config.host;
 
-                    Config.host = io_host;
-
                     var ioclient = require('socket.io-client');
 
                     global.socket = ioclient(io_host, {
