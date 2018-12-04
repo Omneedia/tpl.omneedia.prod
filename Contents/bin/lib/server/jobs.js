@@ -47,6 +47,7 @@ process.on('message', message => {
 
         global.manifest = JSON.parse(m.toString('utf-8'));
         var job = message.job;
+
         if (!job) return false;
         var _App = require(global.PROJECT_SYSTEM + '/../jobs/' + job);
         _App = Object.assign(_App, require(__dirname + '/global.js')());
@@ -82,8 +83,8 @@ process.on('message', message => {
 
         var ioclient = require('socket.io-client');
 
-        global.socket = ioclient(io_host, {
-            query: "engine=app&iokey=" + setToken() + '&task=' + Config.task + '&hid=' + Config.hid + '&port=' + 3000 + '&thread=' + process.pid + '&appid=' + global.manifest.uid,
+        global.socket = ioclient(Config.host, {
+            query: "engine=job&iokey=" + setToken() + '&task=' + Config.task + '&job=' + job,
             reconnection: true,
             reconnectionDelay: 1000
         });
@@ -93,21 +94,21 @@ process.on('message', message => {
         });
 
         global.socket.on('connect', function () {
-            console.log('\t* waiting for manager to send settings...');
+            console.log('\t* connected to Manager...');
         });
 
-        global.socket.on('#CONFIG', function (r) {
+        //global.socket.on('#CONFIG', function (r) {
 
-            console.log('\t* launching job ' + job);
-            Config.session = r.session;
+        console.log('\t* launching job ' + job);
+        //Config.session = r.session;
 
-            global.registry = global.settings.registry;
+        global.registry = global.settings.registry;
 
-            if (process.env.proxy) Config.session = Config_session;
+        //if (process.env.proxy) Config.session = Config_session;
 
-            _App.init(callback);
+        _App.init(callback);
 
-        });
+        //});
 
 
     });

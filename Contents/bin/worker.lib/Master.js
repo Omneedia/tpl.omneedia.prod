@@ -65,6 +65,8 @@ module.exports = function (NET, cluster, Config) {
 
                     if (!process.env.proxy) io_host = Config.host;
 
+                    Config.host = io_host;
+
                     var ioclient = require('socket.io-client');
 
                     global.socket = ioclient(io_host, {
@@ -82,6 +84,8 @@ module.exports = function (NET, cluster, Config) {
                     });
 
                     global.socket.on('#job', function (s) {
+                        console.log('\t- master sent job to worker.');
+
                         var job = s.job;
                         var r = s.settings;
                         const compute = fork('./lib/server/jobs.js', undefined, {
