@@ -293,8 +293,6 @@ module.exports = function (NET, cluster, Config, Settings) {
         console.log('\t[ OK ] thread #' + require('cluster').worker.id);
     });
 
-    if (process.env.proxy) Config.session = Config_session;
-
     init_thread();
 
     process.on('message', function (message, connection) {
