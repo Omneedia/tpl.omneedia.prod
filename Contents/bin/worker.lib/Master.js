@@ -83,37 +83,43 @@ module.exports = function (NET, cluster, Config) {
 
 
 
-                    global.socket.on('#job', function (s) {
-                        console.log('\t- master sent job to worker.');
+                    //global.socket.on('#job', function (s) {
+                    //console.log('\t- master sent job to worker.');
 
-                        var job = s.job;
-                        var r = s.settings;
+                    //var job = s.job;
+                    var r = s.settings;
 
-                        function forkJob(job) {
-                            const compute = fork('./lib/server/jobs.js', undefined, {
-                                env: process.env
-                            });
-                            compute.on('exit', function (worker, code, signal) {
-                                console.log('\t! RESPAWING JOB');
-                                forkJob(job);
-                            });
-                            if (!r.config.job) r.config.job = {};
-                            if (!r.config.job[job]) r.config.job[job] = {
-                                type: "loop",
-                                run: {
-                                    every: 1
-                                }
-                            };
-                            compute.send({
-                                job: job,
-                                Config: Config,
-                                settings: r.config
-                            });
+                    function forkJob(job) {
+                        console.log('\t- job [ ' + job + ' ] started');
+                        const compute = fork('./lib/server/jobs.js', undefined, {
+                            env: process.env
+                        });
+                        compute.on('exit', function (worker, code, signal) {
+                            console.log('\t! RESPAWING JOB');
+                            forkJob(job);
+                        });
+                        if (!r.config.job) r.config.job = {};
+                        if (!r.config.job[job]) r.config.job[job] = {
+                            type: "loop",
+                            run: {
+                                every: 1
+                            }
                         };
-                        forkJob(job);
+                        compute.send({
+                            job: job,
+                            Config: Config,
+                            settings: r.config
+                        });
+                    };
+
+                    if (process.env.job == "1") {
+                        for (var i = 0; i < global.manifest.jobs.length; i++) forkJob(global.manifest.jobs[i]);
+                    };
 
 
-                    });
+
+
+                    //});
 
                     global.socket.on('#CONFIG', function (r) {
 
