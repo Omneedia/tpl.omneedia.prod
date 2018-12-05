@@ -87,34 +87,9 @@ module.exports = function (NET, cluster, Config) {
                     //console.log('\t- master sent job to worker.');
 
                     //var job = s.job;
-                    var r = s.settings;
+                    //var r = s.settings;
 
-                    function forkJob(job) {
-                        console.log('\t- job [ ' + job + ' ] started');
-                        const compute = fork('./lib/server/jobs.js', undefined, {
-                            env: process.env
-                        });
-                        compute.on('exit', function (worker, code, signal) {
-                            console.log('\t! RESPAWING JOB');
-                            forkJob(job);
-                        });
-                        if (!r.config.job) r.config.job = {};
-                        if (!r.config.job[job]) r.config.job[job] = {
-                            type: "loop",
-                            run: {
-                                every: 1
-                            }
-                        };
-                        compute.send({
-                            job: job,
-                            Config: Config,
-                            settings: r.config
-                        });
-                    };
 
-                    if (process.env.job == "1") {
-                        for (var i = 0; i < global.manifest.jobs.length; i++) forkJob(global.manifest.jobs[i]);
-                    };
 
 
 
@@ -129,11 +104,41 @@ module.exports = function (NET, cluster, Config) {
                         if (process.env.proxy) Config.session = Config_session;
 
                         if (global.manifest.jobs.length > 0) {
-                            console.log('\t* launching jobs');
-                            global.socket.emit('job', {
+
+
+                            function forkJob(job) {
+                                console.log('\t- job [ ' + job + ' ] started');
+                                const compute = fork('./lib/server/jobs.js', undefined, {
+                                    env: process.env
+                                });
+                                compute.on('exit', function (worker, code, signal) {
+                                    console.log('\t! RESPAWING JOB');
+                                    forkJob(job);
+                                });
+                                if (!r.config.job) r.config.job = {};
+                                if (!r.config.job[job]) r.config.job[job] = {
+                                    type: "loop",
+                                    run: {
+                                        every: 1
+                                    }
+                                };
+                                compute.send({
+                                    job: job,
+                                    Config: Config,
+                                    settings: r.config
+                                });
+                            };
+
+                            if (process.env.job == "1") {
+                                console.log('\t* launching jobs');
+                                for (var i = 0; i < global.manifest.jobs.length; i++) forkJob(global.manifest.jobs[i]);
+                            };
+
+                            /*global.socket.emit('job', {
                                 task: Config.task,
                                 jobs: global.manifest.jobs
-                            });
+                            });*/
+
                         };
 
                         for (var i = 0; i < numCPUs; i++) {
