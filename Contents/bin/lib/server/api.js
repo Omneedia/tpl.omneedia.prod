@@ -68,6 +68,7 @@ module.exports = function (app, express, Config) {
             };
             if (x.auth) var uid = x.auth.uid;
             else var uid = '-';
+            /*
             var o = {
                 action: api.action,
                 method: api.method,
@@ -101,6 +102,7 @@ module.exports = function (app, express, Config) {
                     });
                 };
             };
+            */
             p.push(function (err, response) {
                 if (err) {
                     batch.push({
