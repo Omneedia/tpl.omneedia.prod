@@ -89,7 +89,8 @@ module.exports = function () {
             };
 
             if (!Array.isArray(ff)) ff = [ff];
-            set = global.settings['docs'][0];
+            if (Array.isArray(global.settings['docs'])) set = global.settings['docs'][0];
+            else set = global.settings['docs'];
             db = set.split('://')[0];
             tb = set.split('://')[1];
 
@@ -176,7 +177,8 @@ module.exports = function () {
                     if (err) return err('NOT_FOUND', 404);
                     if (files.length == 0) {
                         if (!global.settings['docs']) return cb("DOCS_SETTINGS_REQUIRED", null);
-                        var set = global.settings['docs'][0];
+                        if (Array.isArray(global.settings['docs'])) var set = global.settings['docs'][0];
+                        else var set = global.settings['docs'];
                         var db = set.split('://')[0];
                         var tb = set.split('://')[1];
                         _App.using('db').query(db, 'select * from ' + tb + ' where docId="' + ff.docId + '"', function (e, r) {
@@ -267,6 +269,27 @@ module.exports = function () {
             dir: dir,
             path: dir + sep + filename,
             url: "/tmp/" + filename
+        };
+    };
+
+    _App.log = function (action, key, value, uid) {
+
+        if (global.settings['logs']) {
+            if (global.settings['logs'].enabled) {
+
+                var set = global.settings['logs'].log;
+                var o = {
+                    type: "log",
+                    action: action,
+                    method: key,
+                    stamp: new Date(),
+                    uid: uid,
+                    post: JSON.stringify(value)
+                };
+                _App.using('db').post(set, o, function (e, r) {
+                    //console.log(r);
+                });
+            };
         };
     };
 

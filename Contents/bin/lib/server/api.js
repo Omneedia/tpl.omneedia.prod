@@ -49,6 +49,39 @@ module.exports = function (app, express, Config) {
                     p.push(api.data[e]);
                 };
             };
+            var o = {
+                action: api.action,
+                method: api.method,
+                stamp: new Date(),
+                uid: x.auth.uid,
+                post: data.data
+            };
+            if (o.post) {
+
+                if (o.post.length == 1) {
+                    o.post = o.post[0];
+                    if (o.action != "__QUERY__") delete o.post.__SQL__;
+                    else {
+                        if (o.post.__SQL__) {
+                            o.post.sql = CYPHER_decode('0mneediaRulez!', o.post.__SQL__);
+                            delete o.post.__SQL__;
+                        }
+                    }
+                }
+            } else o.post = null;
+            o.post = JSON.stringify(o.post);
+            o.type = "api";
+
+            if (o.action == "__QUERY__") o.action = "QUERY";
+
+            if (global.settings['logs']) {
+                if (global.settings['logs'].enabled) {
+                    var set = global.settings['logs'].log;
+                    x.using('db').post(set, o, function (e, r) {
+
+                    });
+                };
+            };
             p.push(function (err, response) {
                 if (err) {
                     batch.push({
