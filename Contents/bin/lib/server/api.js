@@ -49,11 +49,13 @@ module.exports = function (app, express, Config) {
                     p.push(api.data[e]);
                 };
             };
+            if (x.auth) var uid = x.auth.uid;
+            else var uid = '-';
             var o = {
                 action: api.action,
                 method: api.method,
                 stamp: new Date(),
-                uid: x.auth.uid,
+                uid: uid,
                 post: data.data
             };
             if (o.post) {
