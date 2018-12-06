@@ -3,6 +3,23 @@ module.exports = function (app, express, Config) {
     var path = require('path');
     var sep = "/";
 
+    function CYPHER_decode(key, str) {
+        function keyCharAt(key, i) {
+            return key.charCodeAt(Math.floor(i % key.length));
+        };
+        var arr = Buffer.from(str, 'base64').toString('utf-8');
+        if (arr.indexOf('|') == -1) return false;
+        var _key = arr.split('|')[1];
+        if (!_key) return false;
+        if (_key != key) return false;
+        //if (key != __QUERY__.fingerprint) return false;
+        arr = arr.split('|')[0].match(/.{1,3}/g);
+        var decode = [];
+        for (var i = 0; i < arr.length; i++) decode.push(String.fromCharCode(arr[i] * 1 - keyCharAt(key, i)));
+
+        return decode.reverse().join('');
+    };
+
     function processRoute(req, resp, next) {
 
         var fs = require('fs');
