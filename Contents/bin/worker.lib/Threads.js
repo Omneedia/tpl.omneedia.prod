@@ -155,6 +155,13 @@ module.exports = function (NET, cluster, Config, Settings) {
 
         io.on('connection', function (socket) {
 
+            try {
+                var me = require(__dirname + '/../lib/server/global.js')();
+                require(PROJECT_SYSTEM + '/io.js')(me, app.io, socket);
+            } catch (e) {
+
+            };
+
             global.OASocketonAuth = function (response) {
                 var r = JSON.parse(response);
                 socket.emit("#auth", response);
