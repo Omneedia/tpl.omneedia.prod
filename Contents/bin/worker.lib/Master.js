@@ -102,7 +102,7 @@ module.exports = function (NET, cluster, Config) {
                         Config.session = r.session;
                         global.settings = r.config;
                         if (process.env.proxy) Config.session = Config_session;
-
+                        if (!global.manifest.jobs) global.manifest.jobs = [];
                         if (global.manifest.jobs.length > 0) {
 
 
