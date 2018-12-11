@@ -258,6 +258,7 @@ module.exports = function () {
     };
 
     _App.temp = function (ext) {
+        var fs = require('fs');
         var uid = Math.uuid();
         var dir = _App.tmpdir() + sep + "tempfiles";
         fs.mkdir(dir, function () {});
