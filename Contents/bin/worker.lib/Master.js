@@ -81,21 +81,6 @@ module.exports = function (NET, cluster, Config) {
                         console.log('\t* waiting for manager to send settings...');
                     });
 
-
-
-                    //global.socket.on('#job', function (s) {
-                    //console.log('\t- master sent job to worker.');
-
-                    //var job = s.job;
-                    //var r = s.settings;
-
-
-
-
-
-
-                    //});
-
                     global.socket.on('#CONFIG', function (r) {
 
                         console.log('\t* launching instance');
@@ -103,6 +88,8 @@ module.exports = function (NET, cluster, Config) {
                         global.settings = r.config;
                         if (process.env.proxy) Config.session = Config_session;
                         if (!global.manifest.jobs) global.manifest.jobs = [];
+                        global.URL = r.url;
+
                         if (global.manifest.jobs.length > 0) {
 
 
@@ -134,11 +121,6 @@ module.exports = function (NET, cluster, Config) {
                                 for (var i = 0; i < global.manifest.jobs.length; i++) forkJob(global.manifest.jobs[i]);
                             };
 
-                            /*global.socket.emit('job', {
-                                task: Config.task,
-                                jobs: global.manifest.jobs
-                            });*/
-
                         };
 
                         for (var i = 0; i < numCPUs; i++) {
@@ -166,8 +148,6 @@ module.exports = function (NET, cluster, Config) {
 
     var numCPUs = require('os').cpus().length;
     var net = require('net');
-
-    //var numCPUs = 1;
 
     if (port == "auto") {
         var fp = require("find-free-port")

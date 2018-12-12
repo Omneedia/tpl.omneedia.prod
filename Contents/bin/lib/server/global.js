@@ -269,7 +269,7 @@ module.exports = function () {
             filename: filename,
             dir: dir,
             path: dir + sep + filename,
-            url: "/tmp/" + filename
+            url: global.URL + "/tmp/" + filename
         };
     };
 
