@@ -150,18 +150,22 @@ module.exports = function (NET, cluster, Config) {
 
     };
 
-    var numCPUs = require('os').cpus().length;
-    var net = require('net');
+    // create tempfiles
 
-    if (port == "auto") {
-        var fp = require("find-free-port")
-        fp(3000, function (err, freePort) {
-            port = freePort;
+    fs.mkdir('/data/tempfiles', function () {
+        var numCPUs = require('os').cpus().length;
+        var net = require('net');
+
+        if (port == "auto") {
+            var fp = require("find-free-port")
+            fp(3000, function (err, freePort) {
+                port = freePort;
+                init();
+            });
+        } else {
+            if (!port) port = 3000;
             init();
-        });
-    } else {
-        if (!port) port = 3000;
-        init();
-    }
+        }
+    });
 
 };

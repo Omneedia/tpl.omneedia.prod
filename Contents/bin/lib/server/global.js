@@ -253,15 +253,13 @@ module.exports = function () {
     }
 
     _App.tmpdir = function (filename) {
-        var OS = require('os');
-        return OS.tmpdir();
+        return "/data/tempfiles";
     };
 
     _App.temp = function (ext) {
         var fs = require('fs');
         var uid = Math.uuid();
-        var dir = _App.tmpdir() + sep + "tempfiles";
-        fs.mkdir(dir, function () {});
+        var dir = "/data/tempfiles";
         var filename = uid;
         if (ext) filename += "." + ext;
         return {
