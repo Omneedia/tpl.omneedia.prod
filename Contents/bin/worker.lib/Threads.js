@@ -1,6 +1,7 @@
-module.exports = function (NET, cluster, Config, Settings) {
+module.exports = function (NET, cluster, Config, Settings, URI) {
 
     var events = require('events');
+    global.uri = URI;
     global.settings = Settings;
     global.eventEmitter = new events.EventEmitter();
 

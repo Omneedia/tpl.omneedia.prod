@@ -42,7 +42,8 @@ module.exports = function (NET, cluster, Config) {
             workers[i] = cluster.fork();
             workers[i].send({
                 config: JSON.stringify(Config),
-                settings: JSON.stringify(global.settings)
+                settings: JSON.stringify(global.settings),
+                uri: global.uri
             });
             workers[i].on('exit', function (worker, code, signal) {
                 console.log('\t! RESPAWING WORKER#', i);
