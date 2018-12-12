@@ -5,7 +5,7 @@ module.exports = function (app, express, Config) {
 
     var Manifest = global.manifest;
 
-    app.use('/tmp', '/data/tempfiles');
+    app.use('/tmp', express.static('/data/tempfiles'));
 
     var _App = require(global.PROJECT_SYSTEM + sep + "app.js");
     _App = Object.assign(_App, require(__dirname + '/global.js')());
