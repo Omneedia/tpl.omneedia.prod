@@ -152,7 +152,7 @@ module.exports = function (NET, cluster, Config) {
 
     // create tempfiles
 
-    fs.mkdir('/data/tempfiles', function () {
+    require('fs').mkdir('/data/tempfiles', function () {
         var numCPUs = require('os').cpus().length;
         var net = require('net');
 
