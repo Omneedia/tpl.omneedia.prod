@@ -1,6 +1,9 @@
 module.exports = function (NET, cluster, Config) {
 
     var port = process.env.port;
+    var numCPUs = require('os').cpus().length;
+    var net = require('net');
+
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
     Math = require(__dirname + '/../lib/framework/math')();
@@ -153,8 +156,6 @@ module.exports = function (NET, cluster, Config) {
     // create tempfiles
 
     require('fs').mkdir('/data/tempfiles', function () {
-        var numCPUs = require('os').cpus().length;
-        var net = require('net');
 
         if (port == "auto") {
             var fp = require("find-free-port")
