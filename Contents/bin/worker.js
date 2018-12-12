@@ -87,6 +87,7 @@ if (cluster.isMaster) {
                 };
                 global.manifest = JSON.parse(r.toString('utf-8'));
                 require('./lib/globals.js');
+                console.log(data);
                 startThreads(NET, cluster, Config, Settings, data.uri);
             });
         }

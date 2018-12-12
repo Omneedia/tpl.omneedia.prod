@@ -9,6 +9,8 @@ module.exports = function (NET, cluster, Config) {
     Array = require(__dirname + '/../lib/framework/arrays')();
     String = require(__dirname + '/../lib/framework/strings')();
 
+    var URI = "";
+
     function init() {
 
         console.log('\nOmneedia Worker started at ' + NET.getIPAddress() + ":" + port + " (" + numCPUs + " threads)");
@@ -43,7 +45,7 @@ module.exports = function (NET, cluster, Config) {
             workers[i].send({
                 config: JSON.stringify(Config),
                 settings: JSON.stringify(global.settings),
-                uri: global.uri
+                uri: URI
             });
             workers[i].on('exit', function (worker, code, signal) {
                 console.log('\t! RESPAWING WORKER#', i);
@@ -89,8 +91,8 @@ module.exports = function (NET, cluster, Config) {
                         global.settings = r.config;
                         if (process.env.proxy) Config.session = Config_session;
                         if (!global.manifest.jobs) global.manifest.jobs = [];
-                        global.uri = r.url;
-                        console.log(r);
+
+                        URI = r.url;
 
                         if (global.manifest.jobs.length > 0) {
 
