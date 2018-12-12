@@ -88,7 +88,7 @@ module.exports = function (NET, cluster, Config) {
                         global.settings = r.config;
                         if (process.env.proxy) Config.session = Config_session;
                         if (!global.manifest.jobs) global.manifest.jobs = [];
-                        global.URL = r.url;
+                        global.uri = r.url;
                         console.log(r);
 
                         if (global.manifest.jobs.length > 0) {
