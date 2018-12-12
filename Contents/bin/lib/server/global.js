@@ -275,7 +275,6 @@ module.exports = function () {
 
     _App.makePDF = function (url, out, cb) {
         const puppeteer = require('puppeteer');
-        var pdf = _App.temp('pdf');
         class Webpage {
             static async generatePDF(url) {
                 const browser = await puppeteer.launch({
@@ -285,7 +284,7 @@ module.exports = function () {
                 const page = await browser.newPage();
                 await page.goto(url); // Adjust network idle as required. 
                 const pdfConfig = {
-                    path: pdf.path, // Saves pdf to disk. 
+                    path: _App.temp('pdf').path, // Saves pdf to disk. 
                     format: 'A4',
                     printBackground: true,
                     margin: { // Word's default A4 margins
