@@ -271,7 +271,22 @@ module.exports = function () {
         };
     };
 
-    _App.makePDF = function (url, out, cb) {
+    _App.makePDF = function (url, out, cb, cb2) {
+        var pdfConfig = {
+            path: _App.temp('pdf').path, // Saves pdf to disk. 
+            format: 'A4',
+            printBackground: true,
+            margin: { // Word's default A4 margins
+                top: '2.54cm',
+                bottom: '2.54cm',
+                left: '2.54cm',
+                right: '2.54cm'
+            }
+        };
+        if (cb2) {
+            pdfConfig = Object.assign(pdfConfig, cb);
+            cb = cb2;
+        };
         const puppeteer = require('puppeteer');
         class Webpage {
             static async generatePDF(url) {
@@ -281,17 +296,7 @@ module.exports = function () {
                 }); // Puppeteer can only generate pdf in headless mode.
                 const page = await browser.newPage();
                 await page.goto(url); // Adjust network idle as required. 
-                const pdfConfig = {
-                    path: _App.temp('pdf').path, // Saves pdf to disk. 
-                    format: 'A4',
-                    printBackground: true,
-                    margin: { // Word's default A4 margins
-                        top: '2.54cm',
-                        bottom: '2.54cm',
-                        left: '2.54cm',
-                        right: '2.54cm'
-                    }
-                };
+
                 await page.emulateMedia('screen');
                 const pdf = await page.pdf(pdfConfig); // Return the pdf buffer. Useful for saving the file not to disk. 
 
