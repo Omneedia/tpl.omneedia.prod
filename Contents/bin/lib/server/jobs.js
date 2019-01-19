@@ -64,6 +64,7 @@ process.on('message', message => {
                 else every = every * 1000;
 
                 setTimeout(function () {
+                    App = _App;
                     _App.init(callback);
                 }, every);
             };
