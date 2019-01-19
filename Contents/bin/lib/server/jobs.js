@@ -64,7 +64,6 @@ process.on('message', message => {
                 else every = every * 1000;
 
                 setTimeout(function () {
-                    App = _App;
                     _App.init(callback);
                 }, every);
             };
@@ -107,6 +106,7 @@ process.on('message', message => {
 
         //if (process.env.proxy) Config.session = Config_session;
 
+        App = _App;
         _App.init(callback);
 
         //});
