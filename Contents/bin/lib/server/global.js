@@ -290,10 +290,25 @@ module.exports = function () {
         const puppeteer = require('puppeteer');
         class Webpage {
             static async generatePDF(url) {
-                const browser = await puppeteer.launch({
+                var cnf = {
                     headless: true,
                     args: ['--no-sandbox', '--disable-setuid-sandbox']
-                }); // Puppeteer can only generate pdf in headless mode.
+                };
+                if (global.CFG) {
+                    if (global.CFG.current) {
+                        if (global.CFG.current.proxy) {
+                            cnf = Object.assign(cnf, {
+                                ignoreHTTPSErrors: true,
+                                args: [
+                                    "--proxy-server=" + global.CFG.current.proxy,
+                                    "--no-sandbox",
+                                    "--disable-setuid-sandbox"
+                                ]
+                            });
+                        }
+                    }
+                };
+                const browser = await puppeteer.launch(cnf);
                 const page = await browser.newPage();
                 await page.goto(url); // Adjust network idle as required. 
 
