@@ -323,10 +323,12 @@ module.exports = function () {
 
         (async () => {
             const buffer = await Webpage.generatePDF(url);
-            if (out) {
+            if (typeof out === 'function') {
+                out(buffer);
+            } else {
                 if (!cb) cb = function () {};
                 _App.using('fs').writeFile(out, buffer, cb);
-            } else return buffer;
+            }
         })();
     };
 
