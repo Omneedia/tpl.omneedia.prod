@@ -24,6 +24,12 @@ module.exports = function (app, express, Config) {
         });
     }
 
+    _App.cors = {
+        enable: function () {
+            return app.use(require('cors')())
+        }
+    }
+
     if (!process.env.task) {
         var setmeup = require('../settings');
         setmeup.update(global.manifest, function (settings) {
