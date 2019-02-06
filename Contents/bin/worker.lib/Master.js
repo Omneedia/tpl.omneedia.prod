@@ -124,13 +124,12 @@ module.exports = function (NET, cluster, Config) {
                             };
 
                             if (process.env.job) {
-                                /*if (process.env.job == "1") {
-                                    console.log('\t* launching jobs');
-                                    for (var i = 0; i < global.manifest.jobs.length; i++) forkJob(global.manifest.jobs[i]);
-                                } else {*/
-                                console.log('\t* launching job ' + process.env.job);
-                                return forkJob(process.env.job);
-                                //}
+                                if (process.env.job == "1") {
+
+                                } else {
+                                    console.log('\t* launching job ' + process.env.job);
+                                    return forkJob(process.env.job);
+                                }
                             };
 
 
