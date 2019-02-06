@@ -96,7 +96,7 @@ module.exports = function (NET, cluster, Config) {
                         if (!global.manifest.jobs) global.manifest.jobs = [];
 
                         URI = r.url;
-
+                        /*
                         if (global.manifest.jobs.length > 0) {
 
 
@@ -135,6 +135,7 @@ module.exports = function (NET, cluster, Config) {
 
 
                         };
+                        */
 
                         for (var i = 0; i < numCPUs; i++) {
                             spawn(i);
