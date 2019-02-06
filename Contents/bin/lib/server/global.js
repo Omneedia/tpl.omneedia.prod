@@ -294,19 +294,18 @@ module.exports = function () {
                     headless: true,
                     args: ['--no-sandbox', '--disable-setuid-sandbox']
                 };
-                if (global.CFG) {
-                    if (global.CFG.current) {
-                        if (global.CFG.current.proxy) {
-                            cnf = Object.assign(cnf, {
-                                ignoreHTTPSErrors: true,
-                                args: [
-                                    "--proxy-server=" + global.CFG.current.proxy,
-                                    "--no-sandbox",
-                                    "--disable-setuid-sandbox"
-                                ]
-                            });
-                        }
-                    }
+
+                if (process.env.proxy) {
+
+                    cnf = Object.assign(cnf, {
+                        ignoreHTTPSErrors: true,
+                        args: [
+                            "--proxy-server=" + process.env.proxy,
+                            "--no-sandbox",
+                            "--disable-setuid-sandbox"
+                        ]
+                    });
+
                 };
                 const browser = await puppeteer.launch(cnf);
                 const page = await browser.newPage();
@@ -354,18 +353,16 @@ module.exports = function () {
     };
 
     var request = require('request');
-    if (global.CFG) {
-        if (global.CFG.current) {
-            if (global.CFG.current.proxy) {
-                _App.request = request.defaults({
-                    proxy: global.CFG.current.proxy,
-                    encoding: null
-                })
-            } else _App.request = request.defaults({
-                encoding: null
-            })
-        }
-    };
+
+    if (process.env.proxy) {
+        _App.request = request.defaults({
+            proxy: process.env.proxy,
+            encoding: null
+        })
+    } else _App.request = request.defaults({
+        encoding: null
+    })
+
 
     _App.getData = function () {
         return '/data';
