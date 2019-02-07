@@ -213,16 +213,23 @@ module.exports = function (NET, cluster, Config, Settings, URI) {
         if (global.settings.logs) {
             if (global.settings.logs.enabled) {
                 app.use(function (req, res, next) {
-                    var db = App.using('db');
-                    var log = global.settings.logs.log;
-                    db.post(log, {
-                        stamp: new Date(),
-                        method: req.method,
-                        url: req.originalUrl,
-                        post: JSON.stringify(req.body),
-                        session: req.sessionID,
-                        uid: req.session.user.uid
-                    }, next);
+                    if (!req.session.user) return next();
+                    try {
+                        var log = global.settings.logs.log;
+                        if (req.session.user) var __uid = req.session.user.uid * 1;
+                        else var __uid = "0";
+                        App.using('db').post(log, {
+                            stamp: new Date(),
+                            method: req.method,
+                            url: req.originalUrl,
+                            post: JSON.stringify(req.body),
+                            session: req.sessionID,
+                            uid: __uid
+                        }, next);
+                    } catch (e) {
+                        next();
+                    }
+
                 });
             }
         };
