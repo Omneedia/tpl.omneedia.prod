@@ -25,6 +25,19 @@ module.exports = function (NET, cluster, Config, Settings, URI) {
     var app = express();
     var server = app.listen(0, NET.getIPAddress());
 
+    // POST
+    var bodyParser = require('body-parser');
+
+    app.use(bodyParser.json({
+        limit: '5000mb',
+        extended: true
+    }));
+
+    app.use(bodyParser.urlencoded({
+        limit: '5000mb',
+        extended: true
+    }));
+
     function init_thread() {
 
         // compression
@@ -53,19 +66,7 @@ module.exports = function (NET, cluster, Config, Settings, URI) {
         var cookieParser = require('cookie-parser');
         app.use(cookieParser('0mneediaRulez!'));
 
-        // Upload & POST
-        var bodyParser = require('body-parser');
-
-        app.use(bodyParser.json({
-            limit: '5000mb',
-            extended: true
-        }));
-
-        app.use(bodyParser.urlencoded({
-            limit: '5000mb',
-            extended: true
-        }));
-
+        // Upload
         var multer = require('multer');
 
         var storage = require('multer-gridfs-storage')({
@@ -208,6 +209,23 @@ module.exports = function (NET, cluster, Config, Settings, URI) {
         app.io = io;
 
         app.use(session);
+
+        if (global.settings.logs) {
+            if (global.settings.logs.enabled) {
+                app.use(function (req, res, next) {
+                    var db = App.using('db');
+                    var log = global.settings.logs.log;
+                    db.post(log, {
+                        stamp: new Date(),
+                        method: req.method,
+                        url: req.originalUrl,
+                        post: JSON.stringify(req.body),
+                        session: req.sessionID,
+                        uid: req.session.user.uid
+                    }, next);
+                });
+            }
+        };
 
         // share session with socket.io
 
