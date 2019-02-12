@@ -6,7 +6,7 @@
   "dependencies": {
     "@omneedia/api": "^1.0.0",
     "@omneedia/authom": "1.1.6",
-    "@omneedia/db": "1.2.6",
+    "@omneedia/db": "1.2.7",
     "@omneedia/gridfs-storage-engine": "^0.2.3",
     "@omneedia/mailer": "1.1.3",
     "@omneedia/parse-function": "^5.0.23",
