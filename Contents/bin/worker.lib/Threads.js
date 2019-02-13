@@ -191,14 +191,21 @@ module.exports = function (NET, cluster, Config, Settings, URI) {
         // Session
         var Session = require('express-session');
 
+        app.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, authorization");
+            res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,PUT,OPTIONS");
+            next();
+        });
+
         if (Config.session.indexOf('mongodb://') > -1) {
             var MongoStore = require('connect-mongo')(Session);
             var session = Session({
                 secret: 'omneedia_rulez',
-                saveUninitialized: true,
+                saveUninitialized: false,
                 resave: true,
                 cookie: {
-                    maxAge: 1000 * 60 * 24 // 24 hours
+                    maxAge: 24 * 6 * 60 * 10000
                 },
                 store: new MongoStore({
                     url: Config.session + 'session'
